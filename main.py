@@ -5,7 +5,7 @@ NUMBER_SIGN = ('+', '-')
 DIGIT_NUMBER = ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9')
 REL_OPT = ('<', '>', '<=', '>=', '<>', '=', ',', ' < ', ' > ', ' < = ', ' > = ', ' < > ', ' = ', ' <', ' >', ' <=', ' >=', ' <>', ' =', ' ,', '< ', '> ', '<= ', '>= ', '<> ', '= ', ', ')
 BOOLEAN_ALGEBRA = {"AND", "OR"}
-
+#gdfsdfg
 
 def isDigitValid(toCheck):
     return toCheck in DIGIT_NUMBER
