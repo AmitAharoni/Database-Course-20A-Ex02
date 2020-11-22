@@ -3,9 +3,7 @@ VALID_ATTRIBUTES = ("Customers.Name", "Customers.Age", "Orders.CustomerName", "O
 STRING_QUOTES = ('"', "'", "`", "’")
 NUMBER_SIGN = ('+', '-')
 DIGIT_NUMBER = ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9')
-REL_OPT = ('<', '>', '<=', '>=', '<>', '=', ',', ' < ', ' > ', ' < = ', ' > = ', ' < > ', ' = ', ' <', ' >', ' <=', ' >=', ' <>', ' =', ' ,', '< ', '> ', '<= ', '>= ', '<> ', '= ', ', ')
-BOOLEAN_ALGEBRA = {"AND", "OR"}
-#gdfsdfg
+REL_OPT = ('<=', '>=', '<>', '<', '>', '=')
 
 def isDigitValid(toCheck):
     return toCheck in DIGIT_NUMBER
@@ -44,9 +42,10 @@ def isRel_OpValid(toCheck):
 
 def isSimple_CondValid(toCheck):
     for op in REL_OPT:
-        if (op in toCheck):
+        indexOfOp = str.find(toCheck, op)
+        if (indexOfOp != -1):
             splited = str.split(toCheck, op, 1)
-            return isConstantValid(splited[0]) and isConstantValid(splited[1])
+            return isConstantValid(cleanSpaces(splited[0])) and isConstantValid(cleanSpaces(splited[1]))
 
     return False
 
@@ -91,9 +90,9 @@ def isTableValid(toCheck):
     return toCheck in VALID_TABLES
 
 def isMultiTablesValid(toCheck):
-    if ("," in toCheck):
-        splited = str.split(toCheck, ",", 1)
-        return isTable_ListValid(splited[0]) and isTable_ListValid(splited[1])
+    indexOfOp = str.find(toCheck, ",")
+    if (indexOfOp != -1):
+        return isTable_ListValid(cleanSpaces(toCheck[:indexOfOp])) and isTable_ListValid(cleanSpaces(toCheck[indexOfOp+1:]))
 
     return False
 
@@ -114,9 +113,9 @@ def isOptional_DistinctValid(toCheck):
     return True, toCheck
 
 def isMultiAttributsValid(toCheck):
-    if (","in toCheck):
-        splited = str.split(toCheck, ",", 1)
-        return isAtt_ListValid(splited[0]) and isAtt_ListValid(splited[1])
+    indexOfOp = str.find(toCheck, ",")
+    if (indexOfOp != -1):
+        return isAtt_ListValid(cleanSpaces(toCheck[:indexOfOp])) and isAtt_ListValid(cleanSpaces(toCheck[indexOfOp+1:]))
 
     return False
 
@@ -149,11 +148,11 @@ def getWhereStatement(query):
     lastIndex = (str.__len__(query) - 1)
     return query[afterWhereIndex:]
 
-def deleteAllUnNecSpaces(query):
+def cleanSpaces(query):
     return (' '.join(query.split()))
 
 def isQueryValid(query):
-    cleanQuery = deleteAllUnNecSpaces(query)
+    cleanQuery = cleanSpaces(query)
     selectStatement = getSelectStatement(cleanQuery)
     fromStatement = getFromStatement(cleanQuery)
     whereStatement = getWhereStatement(cleanQuery)
