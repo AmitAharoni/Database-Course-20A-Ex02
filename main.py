@@ -80,7 +80,9 @@ def isConditionValid(toCheck):
 def isWhereValid(whereStatement):
     lastIndex = (str.__len__(whereStatement) - 1)
     if(whereStatement[lastIndex] == ";"):
-        if (isConditionValid(whereStatement[:lastIndex])):
+        whereStatement = whereStatement[:lastIndex]
+        whereStatement = cleanSpaces(whereStatement)
+        if (isConditionValid(whereStatement)):
             return True
 
     print("Invalid. \nParsing <condition> failed")
