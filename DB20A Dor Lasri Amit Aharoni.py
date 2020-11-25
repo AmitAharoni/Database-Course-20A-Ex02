@@ -40,12 +40,24 @@ def isConstantValid(toCheck):
 def isRel_OpValid(toCheck):
     return toCheck in REL_OPT
 
+# ====================================================NEW=========================================================
+def isSameType(firstCond, secondCond):
+    if firstCond == "Customers.Name" or firstCond == "Orders.CustomerName" or firstCond == "Orders.Product":
+        return isStringValid(secondCond)
+    elif firstCond == "Customers.Age" or firstCond == "Orders.Price":
+        return isNumberValid(secondCond)
+    else:
+        return False
+
+# ================================================================================================================
 def isSimple_CondValid(toCheck):
     for op in REL_OPT:
         indexOfOp = str.find(toCheck, op)
         if (indexOfOp != -1):
             splited = str.split(toCheck, op, 1)
-            return isConstantValid(cleanSpaces(splited[0])) and isConstantValid(cleanSpaces(splited[1]))
+            firstCond = cleanSpaces(splited[0])
+            secondCond = cleanSpaces(splited[1])
+            return isConstantValid(firstCond) and isConstantValid(secondCond) and isSameType(firstCond, secondCond)
 
     return False
 
@@ -88,9 +100,11 @@ def isConditionValid(toCheck):
 
 def isWhereValid(whereStatement):
     lastIndex = (str.__len__(whereStatement) - 1)
+
     if(whereStatement[lastIndex] == ";"):
         whereStatement = whereStatement[:lastIndex]
         whereStatement = cleanSpaces(whereStatement)
+
         if (isConditionValid(whereStatement)):
             return True
 
@@ -116,13 +130,13 @@ def isFromValid(fromStatement):
     else:
         print("Invalid. \nParsing <table_list> failed")
         return False
-
+# ====================================================need to be NEW=========================================================
 def isOptional_DistinctValid(toCheck):
     if(toCheck[0:9] == "DISTINCT "):
         toCheck = toCheck[9:]
 
     return True, toCheck
-
+# ================================================================================================================
 def isMultiAttributsValid(toCheck):
     indexOfOp = str.find(toCheck, ",")
     if (indexOfOp != -1):
@@ -138,7 +152,8 @@ def isAttribute_ListValid(toCheck):
 
 def isSelectValid(selectStatement):
     afterDistinctCheck, updatedSelectStatement = isOptional_DistinctValid(selectStatement)
-    if (afterDistinctCheck and isAttribute_ListValid(updatedSelectStatement)):
+
+    if afterDistinctCheck and isAttribute_ListValid(updatedSelectStatement):
         return True
     else:
         print("Invalid. \nParsing <attribute_list> failed")
@@ -162,7 +177,7 @@ def getWhereStatement(query):
 def cleanSpaces(query):
     return (' '.join(query.split()))
 
-
+# ====================================================NEW=========================================================
 def isAttributeCompatibleWithTable(selectStatement, fromStatement):
     if (selectStatement.__contains__("*")):
         return True;
@@ -183,7 +198,7 @@ def isAttributeCompatibleWithTable(selectStatement, fromStatement):
         print("Invalid. \nParsing <attribute_list> failed")
 
     return isFromContainCustomers and isFromContainOrders
-
+# ================================================================================================================
 def isQueryValid(query):
     cleanQuery = cleanSpaces(query)
     selectStatement = getSelectStatement(cleanQuery)
