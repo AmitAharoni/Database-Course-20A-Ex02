@@ -50,16 +50,25 @@ def isSimple_CondValid(toCheck):
     return False
 
 def isCondANDcondValid(toCheck):
-    if (" AND " in toCheck):
-        splited = str.split(toCheck, " AND ", 1)
-        return isConditionValid(splited[0]) and isConditionValid(splited[1])
+    if ("AND" in toCheck):
+        splited = str.split(toCheck, "AND", 1)
+        firstCond = splited[0]
+        secondCond = splited[1]
+        firstCond = cleanSpaces(firstCond)
+        secondCond = cleanSpaces(secondCond)
+        return isConditionValid(firstCond) and isConditionValid(secondCond)
 
     return False
 
 def isCondORcondValid(toCheck):
-    if (" OR " in toCheck):
-        splited = str.split(toCheck, " OR ", 1)
-        return isConditionValid(splited[0]) and isConditionValid(splited[1])
+
+    if ("OR" in toCheck):
+        splited = str.split(toCheck, "OR", 1)
+        firstCond = splited[0]
+        secondCond = splited[1]
+        firstCond = cleanSpaces(firstCond)
+        secondCond = cleanSpaces(secondCond)
+        return isConditionValid(firstCond) and isConditionValid(secondCond)
 
     return False
 
@@ -153,6 +162,28 @@ def getWhereStatement(query):
 def cleanSpaces(query):
     return (' '.join(query.split()))
 
+
+def isAttributeCompatibleWithTable(selectStatement, fromStatement):
+    if (selectStatement.__contains__("*")):
+        return True;
+
+    isCompatible = False
+    isSelectContainCustomers = selectStatement.__contains__("Customers")
+    isSelectContainOrders = selectStatement.__contains__("Orders")
+    isFromContainCustomers =True
+    isFromContainOrders = True
+
+    if isSelectContainCustomers is True:
+        isFromContainCustomers = fromStatement.__contains__("Customers")
+
+    if isSelectContainOrders is True:
+        isFromContainOrders = fromStatement.__contains__("Orders")
+
+    if isFromContainCustomers and isFromContainOrders is False:
+        print("Invalid. \nParsing <attribute_list> failed")
+
+    return isFromContainCustomers and isFromContainOrders
+
 def isQueryValid(query):
     cleanQuery = cleanSpaces(query)
     selectStatement = getSelectStatement(cleanQuery)
@@ -160,7 +191,8 @@ def isQueryValid(query):
     whereStatement = getWhereStatement(cleanQuery)
 
     if(isSelectValid(selectStatement) and isFromValid(fromStatement) and isWhereValid((whereStatement))):
-        print("valid")
+        if(isAttributeCompatibleWithTable(selectStatement, fromStatement)):
+            print("valid")
 
 if __name__ == '__main__':
     query = input("Please enter your query (must contain SELECT, FROM, WHERE):\n")
