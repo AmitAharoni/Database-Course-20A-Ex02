@@ -4,6 +4,45 @@ STRING_QUOTES = ('"', "'", "`", "’")
 NUMBER_SIGN = ('+', '-')
 DIGIT_NUMBER = ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9')
 REL_OPT = ('<=', '>=', '<>', '<', '>', '=')
+valid_queries = [
+        "SELECT Customers.Name    FROM Customers     WHERE Customers.Age=25    ;",
+        "   SELECT Customers.Name FROM Customers WHERE Customers.Name=’Mike’;",
+        "SELECT DISTINCT Customers.Name FROM Customers WHERE     Customers.Age=25;   ",
+        "SELECT Customers.Name,Orders.Price FROM Customers,Orders WHERE Customers.Name=Orders.CustomerName   ;",
+        "SELECT    Customers.Name,Orders.Price FROM Customers,Orders WHERE (Customers.Name=Orders.CustomerName )   AND Orders.Price>1000;",
+        "SELECT Customers.Name   ,Orders.Price FROM  Customers,     Orders WHERE ( (Customers.Name=Orders.CustomerName) AND Customers.Name=’Mike’) OR (Orders.Price>59);",
+        "SELECT Customers.Name,Orders.Price FROM Customers,Orders WHERE ((((Customers.Name=Orders.CustomerName) AND((Orders.Price > 59)) OR (Customers.Age=25))));",
+        "SELECT Customers.Name,Orders.Price FROM Customers,Orders    WHERE ((   (Customers.Name=Orders.CustomerName) AND Customers.Name=’Mike’) OR (Orders.Price>59));",
+        "SELECT      Customers.Name ,Orders.Price FROM       Customers,Orders WHERE (((((Customers.Name    =Orders.CustomerName    )  )     AND Customers.Name=’Mike’) OR ((Orders.Price>59) AND (((Orders.Product='Sony Playstation 5'))))));",
+        "SELECT *      FROM Orders,Customers WHERE Customers.Age =25 OR Customers.Age <=25;",
+        "SELECT Customers.Name,Orders.Price    FROM Customers,Orders WHERE (   Customers.Name=Orders.CustomerName OR Orders.Price>1000) AND Customers.Name=’Mike’; ",
+        "SELECT Customers.Name,Orders.Price FROM Customers,Orders WHERE (Customers.Name=Orders.CustomerName OR (Orders.Price>1000) AND Customers.Name=’Mike’); ",
+        "SELECT Customers.Name,Orders.Price FROM Customers,Orders WHERE (Customers.Name=Orders.CustomerName OR (Orders.Price>1000 AND Customers.Name=’Mike’)); ",
+        "SELECT Customers.Name,    Orders.Price FROM Customers,Orders WHERE     ((( (Customers.Name=Orders.CustomerName) OR ((Orders.Price>1000)) AND (Customers.Name=’Mike’)))); ",
+        "SELECT DISTINCT  * FROM Customers WHERE Customers.Name=’Mike’   ;",
+        "SELECT Customers.Name FROM Customers WHERE Customers.Age=25;",
+        "SELECT Customers.Name FROM Customers WHERE Customers.Name=’Mike’;",
+        "SELECT Customers.Name,Orders.Price FROM Customers,Orders WHERE Customers.Name=Orders.CustomerName;",
+        "SELECT Customers.Name,Orders.Price FROM Customers,Orders WHERE Customers.Name=Orders.CustomerName AND Orders.Price>1000;",
+        "SELECT Customers.Name,Orders.Price FROM Customers,Orders WHERE (Customers.Name=Orders.CustomerName) AND Orders.Price>1000;",
+        "SELECT Customers.Name,Orders.Price FROM Customers,Orders WHERE (Customers.Name=Orders.CustomerName) OR (Orders.Price>59);",
+]
+
+invalid_queries = [
+        "SELECT Customers.Name,Orders.Price FROM Customers,Orders WHERE (Customers.Name=Orders.CustomerName) OR (Orders.Price>1000;",
+        "SELECT Customers.Color,Orders.Price FROM Customers,Orders WHERE (Customers.Name=Orders.CustomerName) OR (Orders.Price>1000;",
+        "SELECT Customers.Name,Orders.Price FROM Customers,Orders WHERE (Customers.Name=Orders.CustomerName) AND OR (Orders.Price>59);",
+        "SELECT Customers.Name,,,,,,, DISTINCT Orders.Price FROM Customers,Orders WHERE Customers.Name=Orders.CustomerName AND Orders.Price>1000;",
+        "SELECT Customers.Name,,asdd,,,, DISTINCT Orders.Price FROM Customers,Orders WHERE (Customers.Name=Orders.CustomerName AND) Orders.Price>1000;"
+        "SELECT Customers.Name, DISTINCT Orders.Price FROM Customers,Orders WHERE (Customers.Name=Orders.CustomerName AND) Orders.Price>1000;",
+        "SELECT * FROM Orders,Customers WHERE Customers.Age =25 OR;",
+        "SELECT * FROM Orders,Customers WHERE Customers.Age =25 OR ;",
+        "SELECT * FROM Orders,Customers WHERE Customers.Age =25 OR Customers.Age < =25;",
+        "SELECT Customers.Name,Orders.Price FROM Customers,Orders WHERE (Customers.Name=Orders.CustomerName OR (Orders.Price>1000) AND Customers.Name=’Mike’; ",
+        "SELECT Customers.Name,Orders.Price FROM Customers,Orders WHERE (Customers.Name=Orders.CustomerName( OR (Orders.Price>1000) AND Customers.Name=’Mike’; ",
+        "SELECT Customers.Name,Orders.Price FROM Customers,Orders WHERE (Customers.Name=Orders.CustomerName) OR (Orders.Price>1000) AND Customers.Name=’Mike’(; ",
+        "SELECT Customers.Name,Orders.Price FROM Customers,Orders WHERE (((Customers.Name=Orders.CustomerName OR (Orders.Price>1000)) AND Customers.Name=’Mike’); "
+]
 
 def isDigitValid(toCheck):
     return toCheck in DIGIT_NUMBER
@@ -40,16 +79,18 @@ def isConstantValid(toCheck):
 def isRel_OpValid(toCheck):
     return toCheck in REL_OPT
 
-# ===================================123=======1=========NEW=========================================================
-def isSameType(firstCond, secondCond):
-    if firstCond == "Customers.Name" or firstCond == "Orders.CustomerName" or firstCond == "Orders.Product":
-        return isStringValid(secondCond)
-    elif firstCond == "Customers.Age" or firstCond == "Orders.Price":
-        return isNumberValid(secondCond)
-    else:
-        return False
+def isCondOnStringAttribute(toCheck):
+    return (toCheck == "Customers.Name" or toCheck == "Orders.CustomerName" or toCheck == "Orders.Product")
 
-# ================================================================================================================
+def isCondOnIntgerAttribute(toCheck):
+    return (toCheck == "Customers.Age" or toCheck == "Orders.Price")
+
+def isSameType(firstCond, secondCond):
+    if (isCondOnStringAttribute(firstCond)):
+        return isCondOnStringAttribute(secondCond) or isStringValid(secondCond)
+    else:            #isCondOnIntgerAttribute == true
+        return isCondOnIntgerAttribute(secondCond) or isNumberValid(secondCond)
+
 def isSimple_CondValid(toCheck):
     for op in REL_OPT:
         indexOfOp = str.find(toCheck, op)
@@ -64,32 +105,25 @@ def isSimple_CondValid(toCheck):
 def isCondANDcondValid(toCheck):
     if ("AND" in toCheck):
         splited = str.split(toCheck, "AND", 1)
-        firstCond = splited[0]
-        secondCond = splited[1]
-        firstCond = cleanSpaces(firstCond)
-        secondCond = cleanSpaces(secondCond)
-        return isConditionValid(firstCond) and isConditionValid(secondCond)
+        return isConditionValid(cleanSpaces(splited[0])) and isConditionValid(cleanSpaces(splited[1]))
 
     return False
 
 def isCondORcondValid(toCheck):
-
     if ("OR" in toCheck):
         splited = str.split(toCheck, "OR", 1)
-        firstCond = splited[0]
-        secondCond = splited[1]
-        firstCond = cleanSpaces(firstCond)
-        secondCond = cleanSpaces(secondCond)
-        return isConditionValid(firstCond) and isConditionValid(secondCond)
+        return isConditionValid(cleanSpaces(splited[0])) and isConditionValid(cleanSpaces(splited[1]))
 
     return False
 
 def isPartCONDValid(toCheck):
     lastindex = str.__len__(toCheck) - 1
 
-    if (toCheck[0] == '('):
-        if (toCheck[lastindex] == ')'):
-            return isConditionValid(toCheck[1:lastindex])
+    if(lastindex != -1):    #for "" AND X case!
+        if (toCheck[0] == '('):
+            if (toCheck[lastindex] == ')'):
+                updatedCond = cleanSpaces(toCheck[1:lastindex])
+                return isConditionValid(updatedCond)
 
     return False
 
@@ -97,15 +131,18 @@ def isConditionValid(toCheck):
     return (isSimple_CondValid(toCheck) or isCondANDcondValid(toCheck)
             or isCondORcondValid(toCheck) or isPartCONDValid(toCheck))
 
-
-def isWhereValid(whereStatement):
+def endOfQuerySignHandler(whereStatement):
     lastIndex = (str.__len__(whereStatement) - 1)
 
     if(whereStatement[lastIndex] == ";"):
-        whereStatement = whereStatement[:lastIndex]
-        whereStatement = cleanSpaces(whereStatement)
+        whereStatement = cleanSpaces(whereStatement[:lastIndex])
 
-        if (isConditionValid(whereStatement)):
+    return whereStatement
+
+def isWhereValid(whereStatement):
+    whereStatement = endOfQuerySignHandler(whereStatement)
+
+    if (isConditionValid(whereStatement)):
             return True
 
     print("Invalid. \nParsing <condition> failed")
@@ -130,13 +167,13 @@ def isFromValid(fromStatement):
     else:
         print("Invalid. \nParsing <table_list> failed")
         return False
-# ====================================================need to be NEW=========================================================
+
 def isOptional_DistinctValid(toCheck):
     if(toCheck[0:9] == "DISTINCT "):
         toCheck = toCheck[9:]
 
     return True, toCheck
-# ================================================================================================================
+
 def isMultiAttributsValid(toCheck):
     indexOfOp = str.find(toCheck, ",")
     if (indexOfOp != -1):
@@ -148,7 +185,10 @@ def isAtt_ListValid(toCheck):
     return isAttributeValid(toCheck) or isMultiAttributsValid(toCheck)
 
 def isAttribute_ListValid(toCheck):
-    return toCheck == "*" or isAtt_ListValid(toCheck)
+    return isAttributeIsAll(toCheck) or isAtt_ListValid(toCheck)
+
+def isAttributeIsAll(toCheck):
+    return toCheck == "*"
 
 def isSelectValid(selectStatement):
     afterDistinctCheck, updatedSelectStatement = isOptional_DistinctValid(selectStatement)
@@ -177,38 +217,45 @@ def getWhereStatement(query):
 def cleanSpaces(query):
     return (' '.join(query.split()))
 
-# ====================================================NEW=========================================================
 def isAttributeCompatibleWithTable(selectStatement, fromStatement):
-    if (selectStatement.__contains__("*")):
-        return True;
+    if(isAttributeIsAll(selectStatement) or  isAttributeListCompatibleWithTable(selectStatement, fromStatement)):
+        return True
 
-    isCompatible = False
+    print("Invalid. \nParsing <attribute_list> failed")
+    return False
+
+def isAttributeListCompatibleWithTable(selectStatement, fromStatement):
     isSelectContainCustomers = selectStatement.__contains__("Customers")
     isSelectContainOrders = selectStatement.__contains__("Orders")
-    isFromContainCustomers =True
-    isFromContainOrders = True
 
-    if isSelectContainCustomers is True:
-        isFromContainCustomers = fromStatement.__contains__("Customers")
+    isFromContainCustomers = fromStatement.__contains__("Customers")
+    isFromContainOrders = fromStatement.__contains__("Orders")
 
-    if isSelectContainOrders is True:
-        isFromContainOrders = fromStatement.__contains__("Orders")
+    if((isSelectContainCustomers and not isFromContainCustomers)
+            or (isSelectContainOrders and not isFromContainOrders)):
+        return False
 
-    if isFromContainCustomers and isFromContainOrders is False:
-        print("Invalid. \nParsing <attribute_list> failed")
+    return True
 
-    return isFromContainCustomers and isFromContainOrders
-# ================================================================================================================
 def isQueryValid(query):
     cleanQuery = cleanSpaces(query)
     selectStatement = getSelectStatement(cleanQuery)
     fromStatement = getFromStatement(cleanQuery)
     whereStatement = getWhereStatement(cleanQuery)
 
-    if(isSelectValid(selectStatement) and isFromValid(fromStatement) and isWhereValid((whereStatement))):
-        if(isAttributeCompatibleWithTable(selectStatement, fromStatement)):
+    if(isSelectValid(selectStatement) and isFromValid(fromStatement) and isWhereValid(whereStatement)
+            and isAttributeCompatibleWithTable(selectStatement, fromStatement)):
             print("valid")
 
 if __name__ == '__main__':
-    query = input("Please enter your query (must contain SELECT, FROM, WHERE):\n")
-    isQueryValid(query)
+    print("=====valid====")
+    for valid_query in valid_queries:
+        isQueryValid(valid_query)
+    print("=====invalid====")
+    for invalid_query in invalid_queries:
+        isQueryValid(invalid_query)
+    print("=============")
+
+    while(True):
+        query = input("Please enter your query (must contain SELECT, FROM, WHERE):\n")
+        isQueryValid(query)
