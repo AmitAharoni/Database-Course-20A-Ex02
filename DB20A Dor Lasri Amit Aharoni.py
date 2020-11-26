@@ -248,7 +248,7 @@ def isQueryValid(query):
             print("valid")
 
 if __name__ == '__main__':
-    print("=====valid====")
+    print("=====valid======")
     for valid_query in valid_queries:
         isQueryValid(valid_query)
     print("=====invalid====")
