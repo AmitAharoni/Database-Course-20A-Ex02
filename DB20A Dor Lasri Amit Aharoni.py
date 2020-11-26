@@ -40,7 +40,7 @@ def isConstantValid(toCheck):
 def isRel_OpValid(toCheck):
     return toCheck in REL_OPT
 
-# ====================================================NEW=========================================================
+# ===================================123=======1=========NEW=========================================================
 def isSameType(firstCond, secondCond):
     if firstCond == "Customers.Name" or firstCond == "Orders.CustomerName" or firstCond == "Orders.Product":
         return isStringValid(secondCond)
