@@ -115,11 +115,9 @@ def notContainTheOtherTable(toCheck, table):
 
     return not toCheck.__contains__(otherTable)
 
-
 def isANDMainAlgebraBoolean(operator):
     return (isSimple_CondValid(operator) or isCondANDcondValid(operator) or isCondORcondValid(operator) or isPartCONDValid(
         operator)) and not isCondORcondValid(operator)
-
 
 def Rule4(operatorList):
     for operator in operatorList:
@@ -206,14 +204,12 @@ def Rule5a(operatorList):
                             operatorList[indexOfPi + 1] = temp
                             break
 
-
 def oneOfCondInAllPredicateContainsBooleanAlgebra(listOfCond):
     for cond in listOfCond:
         if cond.__contains__("AND") or cond.__contains__("OR"):
             return True
 
     return False
-
 
 def getOnePredicateThatContainsAndRemoveFromList(allPredicate):
     for cond in allPredicate:
@@ -222,7 +218,6 @@ def getOnePredicateThatContainsAndRemoveFromList(allPredicate):
             allPredicate.remove(condToReturn)
 
             return condToReturn
-
 
 def splitANDorORCond(condToSplit):
     while (isSimple_CondValid(condToSplit) or isCondANDcondValid(condToSplit) or isCondORcondValid(condToSplit) or isPartCONDValid(condToSplit)) and isPartCONDValid(condToSplit):
@@ -279,9 +274,6 @@ def splitANDorORCond(condToSplit):
                 if isConditionValid(cleanSpaces(firstCond)) and isConditionValid(cleanSpaces(secCond)):
                     return cleanSpaces(firstCond), cleanSpaces(secCond)
 
-
-
-
 def isEveryCondOfPredicateContainEqualSign(predicate):
     allPredicate = [predicate]
 
@@ -296,7 +288,6 @@ def isEveryCondOfPredicateContainEqualSign(predicate):
             return False
 
     return True
-
 
 def Rule11b(operatorList):
     for operator in operatorList:
@@ -571,7 +562,7 @@ def partThree(operatorList):
 
 # todo more checks on OR query
 # todo amit part Three itlabtot
-# cos ema shel git
+
 if __name__ == '__main__':
     queryInput = input("Please enter query (must contain SELECT, FROM, WHERE):\n")
     operatorList = makeExpression(queryInput)

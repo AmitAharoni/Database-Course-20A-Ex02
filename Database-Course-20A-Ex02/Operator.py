@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 
-
 class Operator(ABC):
     def __init__(self, operatorName, description, tables):
         self.operatorName = operatorName
