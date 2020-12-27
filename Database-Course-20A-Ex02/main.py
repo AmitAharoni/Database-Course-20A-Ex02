@@ -571,6 +571,7 @@ def partThree(operatorList):
 
 # todo more checks on OR query
 # todo amit part Three itlabtot
+# cos ema shel git
 if __name__ == '__main__':
     queryInput = input("Please enter query (must contain SELECT, FROM, WHERE):\n")
     operatorList = makeExpression(queryInput)
