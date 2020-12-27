@@ -2,6 +2,7 @@ from Cartesian import Cartesian
 from NJoin import NJoin
 from Pi import Pi
 from Sigma import Sigma
+from TableData import TableData
 import random
 import copy
 

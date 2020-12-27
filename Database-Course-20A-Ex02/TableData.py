@@ -1,6 +1,7 @@
+# no need for getter and setter
 class TableData():
     def __init__(self):
-        self.SchemeName = None 
+        self.SchemeName = None
         self.attributes = None
         self.numOfRows = 0
         self.sizeOfRow = 0
