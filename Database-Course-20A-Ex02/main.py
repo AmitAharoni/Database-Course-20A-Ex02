@@ -304,7 +304,6 @@ def wrapperSplitCondIntoSimpleConditions(allPredicate):
 
     return True
 
-
 def Rule11b(operatorList):
     for operator in operatorList:
         if isinstance(operator, Sigma):
@@ -323,7 +322,6 @@ def Rule11b(operatorList):
                             operatorList.insert(indexOfSigma, njoinToAdd)
                             break
 
-
 # ------------------------------------------EX01 copied functions--------------------------------------------------------
 def endOfQuerySignHandler(whereStatement):
     lastIndex = (str.__len__(whereStatement) - 1)
@@ -332,7 +330,6 @@ def endOfQuerySignHandler(whereStatement):
         whereStatement = cleanSpaces(whereStatement[:lastIndex])
 
     return whereStatement
-
 
 def getSelectStatement(query):
     afterSelectIndex = 7
@@ -479,8 +476,6 @@ def isPartCONDValid(toCheck):
 def isConditionValid(toCheck):
     return (isSimple_CondValid(toCheck) or isCondANDcondValid(toCheck)
             or isCondORcondValid(toCheck) or isPartCONDValid(toCheck))
-
-
 # -----------------------------------------------------------------------------------------------------------------------
 
 def activeRule(operatorList, selectedRuleToActive):
@@ -557,16 +552,13 @@ def active10RandomRules(operatorList):
         randNum = random.randint(1, 6)
         activeRule(operatorList, randNum)
 
-
-# def partThree(copy1, copy2, copy3, copy4):
-
 def afterCartesianOrNJoin(operator, rTableAfterAll, sTableAfterAll):
     if isinstance(operator, Cartesian):
+        print("*")
         #return sizeEstimationCartesian(rTableAfterAll, sTableAfterAll)
     if isinstance(operator, NJoin):
+        print("*")
         #return sizeEstimationNJoin(rTableAfterAll, sTableAfterAll)
-
-
 
 def initializeFirstAndSecondTable(reversedList, schemaR, schemaS):
     rTableAfterAll = schemaR
@@ -587,6 +579,7 @@ def initializeFirstAndSecondTable(reversedList, schemaR, schemaS):
                 lastUpdated = "s"
             else: # not "S" and not "R" then have to be some shirshor from previous size estimation
                 if lastUpdated == "s":
+                    print("*")
                     # sTableAfterAll = sizeEstimationSigma(sTableAfterAll, operator.getDescription())
                 elif lastUpdated == "r":
                     # rTableAfterAll = sizeEstimationSigma(rTableAfterAll, operator.getDescription())
@@ -601,15 +594,16 @@ def initializeFirstAndSecondTable(reversedList, schemaR, schemaS):
                 lastUpdated = "s"
             else:  # not "S" and not "R" then have to be some shirshor from previous size estimation
                 if lastUpdated == "s":
-                  # sTableAfterAll = sizeEstimationPi(sTableAfterAll, operator.getDescription())
+                    print("*")
+                # sTableAfterAll = sizeEstimationPi(sTableAfterAll, operator.getDescription())
                 elif lastUpdated == "r":
+                    print("*")
                     # rTableAfterAll = sizeEstimationPi(rTableAfterAll, operator.getDescription())
                 lastUpdated = None
 
         index += 1
 
     return afterCartesianOrNJoin(operator[index], rTableAfterAll, sTableAfterAll)
-
 
 def partThree(operatorList):
     reversedList = reverseTheList(operatorList)
@@ -618,49 +612,58 @@ def partThree(operatorList):
     schemaS = makeSchemaS(fileLines)
     finalTable = None
 
-    finalTable = initializeFirstAndSecondTable(reversedList, schemaR, schemaS)
+    #finalTable = initializeFirstAndSecondTable(reversedList, schemaR, schemaS)
 
     for operator in reversedList:
         if isinstance(operator, Cartesian):
             schemaAfterCartesian = sizeEstimationCartesian(schemaR, schemaS)
         elif isinstance(operator, Sigma):
-            schemaAfterSigma = sizeEstimationSigma(schemaR, operator.getDescription())
+            schemaAfterSigma = sizeEstimationSigma(schemaAfterCartesian, operator.getDescription())
         # elif isinstance(operator, Pi):
         #    sizeEstimationPi()
         # elif isinstance(operator, NJoin):
         #    sizeEstimationNJoin()
 
-'''
-not finish (calculate cond mekonan)
-def recForCalculateSigma(schema1, predicate):
-    if isSimple_CondValid(predicate):
-        return sizeEstimationSigma(schema1, predicate)
+def recForCalculateSigma(schemaAfterSigma, cond):
+    if isSimple_CondValid(cond):
+        return simpleCondSizeEstimation(schemaAfterSigma, cond) #get prob
     else:
-        if oneOfCondInAllPredicateContainsBooleanAlgebra(predicate):
-            condToSplit = getOnePredicateThatContainsAndRemoveFromList(predicate)
-            firstCond, secCond = splitANDorORCond(predicate)
+        condAsList = [cond]
+        if oneOfCondInAllPredicateContainsBooleanAlgebra(condAsList):
+            condToSplit = getOnePredicateThatContainsAndRemoveFromList(condAsList)
+            firstCond, secCond = splitANDorORCond(condToSplit)
 
-            if condToSplit == "AND":
-                schemaAfterRec1 = recForCalculateSigma(schema1, firstCond)
-                schemaAfterRec2 = recForCalculateSigma(schema1, secCond)
-                return
-            elif condToSplit == "OR":
-                return recForCalculateSigma(schema1, firstCond) + recForCalculateSigma(schema1, secCond)
-'''
+            if condToSplit.__contains__("AND"):
+                return recForCalculateSigma(schemaAfterSigma, firstCond) * recForCalculateSigma(schemaAfterSigma, secCond)
+            elif  condToSplit.__contains__("OR"):
+                return recForCalculateSigma(schemaAfterSigma, firstCond) + recForCalculateSigma(schemaAfterSigma, secCond)
 
-def sizeEstimationSigma(schema1, simplecond):
+def sizeEstimationSigma(schema1, cond):
     printBeforeSigma(schema1)
     schemaAfterSigma = copy.deepcopy(schema1)
-    numOfAttributes = simplecond.count(".")
-    if((numOfAttributes) > 1):
-        condWithTwoAttribute(schemaAfterSigma, simplecond)
-    elif((numOfAttributes) > 0):
-        condWithOneAttribute(schemaAfterSigma, simplecond)
-    elif(condISFalse(simplecond)):
-        schemaAfterSigma = TableData()
-
+    prob = recForCalculateSigma(schemaAfterSigma, cond)
+    schemaAfterSigma.numOfRows = int(prob * schemaAfterSigma.numOfRows)
     printAfterSigma(schemaAfterSigma)
     return schemaAfterSigma
+
+def simpleCondSizeEstimation(schemaAfterSigma, simpleCond):
+    numOfAttributes = simpleCond.count(".")
+    if((numOfAttributes == 1)):
+        return condWithOneAttribute(schemaAfterSigma, simpleCond)
+    elif((numOfAttributes) == 2):
+        return condWithTwoAttribute(schemaAfterSigma, simpleCond)
+    else:
+        return condWithOutAttribute(schemaAfterSigma, simpleCond)
+
+
+def condWithOutAttribute(schemaAfterSigma, simpleCond):
+    splited = str.split(simpleCond, "=", 1)
+    splited[0] = int(cleanSpaces(splited[0]))
+    splited[1] = int(cleanSpaces(splited[1]))
+    if(splited[0] == splited[1]):
+        return 1
+    else:
+        return 0
 
 def condWithTwoAttribute(schemaAfterSigma, simplecond):
     splited = str.split(simplecond, "=", 1)
@@ -671,7 +674,7 @@ def condWithTwoAttribute(schemaAfterSigma, simplecond):
     attributeName2 = getAttributeFromCond(splited[1])
     numOfValuesInAttribute2 = getNumOfValues(schemaAfterSigma, attributeName2)
     minNumOfValues = min(numOfValuesInAttribute1, numOfValuesInAttribute2)
-    schemaAfterSigma.numOfRows = minNumOfValues
+    return (1 / minNumOfValues)
 
 def condISFalse(simplecond):
     splited = str.split(simplecond, "=", 1)
@@ -681,8 +684,7 @@ def condISFalse(simplecond):
 
 def condWithOneAttribute(schemaAfterSigma, simplecond):
     attributeName = getAttributeFromCond(simplecond)
-    numOfValuesInAttribute = getNumOfValues(schemaAfterSigma, attributeName)
-    schemaAfterSigma.numOfRows = numOfValuesInAttribute / schemaAfterSigma.numOfRows
+    return (1 / getNumOfValues(schemaAfterSigma, attributeName))
 
 def getNumOfValues(schemaAfterSigma, simplecond):
     res = None
@@ -798,9 +800,15 @@ def getValueAfterEqual(line):
     equalIndex = line.find("=") + 1
     return int(line[equalIndex:])
 
+#todo cond with and && or
+#todo Cartesian shared attributes, D,E
+#todo work flow of query. (which schema to send next)
+#todo sizeEstimationPi()
+
 if __name__ == '__main__':
     queryInput = input("Please enter query (must contain SELECT, FROM, WHERE):\n")
     operatorList = makeExpression(queryInput)
+    printExpression(operatorList)
     #copyForPartOne = copy.deepcopy(operatorList)  # make a deep copy of operatorList
     #copyForPartTwo = copy.deepcopy(operatorList)
     #partOne(copyForPartOne)
