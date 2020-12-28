@@ -1,7 +1,7 @@
 # no need for getter and setter
-class TableData():
+class TableData:
     def __init__(self):
-        self.SchemeName = None
+        self.schemeName = None
         self.attributes = None
         self.numOfRows = 0
         self.sizeOfRow = 0
@@ -17,4 +17,3 @@ class TableData():
         self.numOfValuesInSD = 0
         self.numOfValuesInRE = 0
         self.numOfValuesInSE = 0
-

@@ -540,29 +540,65 @@ def active10RandomRules(operatorList):
 
 #def partThree(copy1, copy2, copy3, copy4):
 def partThree(operatorList):
-    reversedList = copy.deepcopy(operatorList)
-    printExpression(reversedList)
-    list.reverse(reversedList)
-    printExpression(reversedList)
+    reversedList = reverseTheList(operatorList)
+    fileLines = openAndReadFile()
+    schemaR = makeSchemaR(fileLines)
+    schemaS = makeSchemaS(fileLines)
 
+    for operator in reversedList:
+    if isinstance(operator, Cartesian):
+       schemaAfterCartesian = sizeEstimationCartesian(schemaR, schemaS)
+    # elif isinstance(operator, Sigma):
+    #    sizeEstimationSigma()
+    # elif isinstance(operator, Pi):
+    #    sizeEstimationPi()
+    # elif isinstance(operator, NJoin):
+    #    sizeEstimationNJoin()
+
+def sizeEstimationCartesian():
+    return True
+
+def openAndReadFile():
     statisticsFile = open("statistics.txt", "r")
     lines = statisticsFile.read().splitlines()
     for line in lines:
         line.rstrip('\n')
-        print(line)
+    return lines
 
-    for operator in reversedList:
-        if isinstance(operator, Cartesian):
-            sizeEstimationCartesian()
-        elif isinstance(operator, Sigma):
-            sizeEstimationSigma()
-        elif isinstance(operator, Pi):
-            sizeEstimationPi()
-        elif isinstance(operator, NJoin):
-            sizeEstimationNJoin()
+def reverseTheList(operatorList):
+    reversedList = copy.deepcopy(operatorList)
+    list.reverse(reversedList)
+    return reversedList
 
-# todo more checks on OR query
-# todo amit part Three itlabtot
+def makeSchemaR(lines):
+    schemaR = TableData()
+    schemaR.schemeName = "R"
+    schemaR.attributes = "A,B,C,D,E"
+    schemaR.numOfRows = getValueAfterEqual(lines[2])
+    schemaR.sizeOfRow = 5*4
+    schemaR.numOfValuesInA = getValueAfterEqual(lines[3])
+    schemaR.numOfValuesInB = getValueAfterEqual(lines[4])
+    schemaR.numOfValuesInC = getValueAfterEqual(lines[5])
+    schemaR.numOfValuesInD = getValueAfterEqual(lines[6])
+    schemaR.numOfValuesInE = getValueAfterEqual(lines[7])
+    return schemaR
+
+def makeSchemaS(lines):
+    schemaS = TableData()
+    schemaS.schemeName = "S"
+    schemaS.attributes = "D,E,F,H,I"
+    schemaS.numOfRows = getValueAfterEqual(lines[11])
+    schemaS.sizeOfRow = 5*4
+    schemaS.numOfValuesInD = getValueAfterEqual(lines[12])
+    schemaS.numOfValuesInE = getValueAfterEqual(lines[13])
+    schemaS.numOfValuesInF = getValueAfterEqual(lines[14])
+    schemaS.numOfValuesInH = getValueAfterEqual(lines[15])
+    schemaS.numOfValuesInI = getValueAfterEqual(lines[16])
+    return schemaS
+
+def getValueAfterEqual(line):
+    equalIndex = line.find("=") + 1
+    return int(line[equalIndex:])
 
 if __name__ == '__main__':
     queryInput = input("Please enter query (must contain SELECT, FROM, WHERE):\n")
