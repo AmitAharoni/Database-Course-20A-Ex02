@@ -12,7 +12,11 @@ STRING_QUOTES = ('"', "'", "`", "’")
 NUMBER_SIGN = ('+', '-')
 DIGIT_NUMBER = ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9')
 REL_OPT = ('<=', '>=', '<>', '<', '>', '=')
+
 '''
+ // run on example
+SELECT R.C,S.F FROM S,R WHERE R.C=S.F;
+
 SELECT R.D,S.E FROM R,S WHERE S.D>4  AND R.A>10; // same as in example
 SELECT R.D,S.E FROM R,S WHERE S.D=R.D  AND S.E=R.E;  // 11b example
 
@@ -28,9 +32,7 @@ SELECT R.C,S.F FROM R,S WHERE (R.C=S.F) AND (R.C>59);
 SELECT R.E,    S.H FROM R,S WHERE     ((( (R.E=S.H) OR ((S.H>1000)) AND (R.E=100))));
 SELECT R.E,    S.H FROM R,S WHERE     ((( (R.E=S.H) AND ((S.H>1000)) OR (R.E=100))));
 SELECT R.E,    S.H FROM R,S WHERE     (R.E=S.H AND S.H>1000) OR (R.E=100);
-
 '''
-
 
 def makeExpression(query):
     cleanQuery = cleanSpaces(query)
@@ -40,13 +42,11 @@ def makeExpression(query):
 
     return [Pi(selectStatement, None), Sigma(whereStatement, None), Cartesian(None, fromStatement)]
 
-
 def printExpression(operatorsList):
     i = 0
     while i < operatorsList.__len__():
         if operatorsList[i].getDescription() is not None and operatorsList[i].getTables() is not None:
-            print(operatorsList[i].getOperatorName() + "[" + operatorsList[i].getDescription() + "]" + "(" +
-                  operatorsList[i].getTables() + ")", end="")
+            print(operatorsList[i].getOperatorName() + "[" + operatorsList[i].getDescription() + "]" + "(" + operatorsList[i].getTables() + ")", end="")
         elif operatorsList[i].getDescription() is None and operatorsList[i].getTables() is not None:
             # Cartesian
             cartesianOrNjoin = operatorsList[i]
@@ -54,23 +54,17 @@ def printExpression(operatorsList):
             if cartesianOrNjoin.isOperatorInFirst() and cartesianOrNjoin.isOperatorInSecond():
                 firstSigma = operatorsList[i + 1]
                 secondSigma = operatorsList[i + 2]
-                print(
-                    cartesianOrNjoin.getOperatorName() + "(" + firstSigma.getOperatorName() + "[" + firstSigma.getDescription() + "]" + "(" + firstSigma.getTables() + ")",
-                    ",",
-                    secondSigma.getOperatorName() + "[" + secondSigma.getDescription() + "]" + "(" + secondSigma.getTables() + "))",
-                    end="")
+                print(cartesianOrNjoin.getOperatorName() + "(" + firstSigma.getOperatorName() + "[" + firstSigma.getDescription() + "]" + "(" + firstSigma.getTables() + ")",  ",",
+                       secondSigma.getOperatorName() + "[" + secondSigma.getDescription() + "]" + "(" + secondSigma.getTables() + "))",  end="")
                 i += 2
             elif cartesianOrNjoin.isOperatorInFirst() and not cartesianOrNjoin.isOperatorInSecond():
                 firstSigma = operatorsList[i + 1]
-                print(
-                    cartesianOrNjoin.getOperatorName() + "(" + firstSigma.getOperatorName() + "[" + firstSigma.getDescription() + "]" + "(" + firstSigma.getTables() + ")"
-                    + cartesianOrNjoin.getTables() + ")", end="")
+                print(cartesianOrNjoin.getOperatorName() + "(" + firstSigma.getOperatorName() + "[" + firstSigma.getDescription() + "]" + "(" + firstSigma.getTables() + ")"
+                       + cartesianOrNjoin.getTables() + ")", end = "")
                 i += 1
             elif not cartesianOrNjoin.isOperatorInFirst() and cartesianOrNjoin.isOperatorInSecond():
                 secondSigma = operatorsList[i + 1]
-                print(
-                    cartesianOrNjoin.getOperatorName() + "(" + cartesianOrNjoin.getTables() + secondSigma.getOperatorName() + "[" + secondSigma.getDescription() + "]" + "(" + secondSigma.getTables() + "))",
-                    end="")
+                print(cartesianOrNjoin.getOperatorName() + "(" + cartesianOrNjoin.getTables() + secondSigma.getOperatorName() + "[" + secondSigma.getDescription() + "]" + "(" + secondSigma.getTables() + "))" ,end = "")
                 i += 1
             else:
                 print(cartesianOrNjoin.getOperatorName() + "(" + operatorsList[i].getTables() + ")", end="")
@@ -81,13 +75,11 @@ def printExpression(operatorsList):
             print(operatorsList[i].getOperatorName() + "(", end="")
         i += 1
 
-    for i in range(
-            operatorsList.__len__() - 1):  # operator.getDescription() is not None and operator.getTables() is not None close one paratensis
+    for i in range(operatorsList.__len__() - 1): #  operator.getDescription() is not None and operator.getTables() is not None close one paratensis
         if i == (operatorsList.__len__() - 2):
             print(")")
         else:
             print(")", end="")
-
 
 def splitANDCond(toCheck):
     while (isSimple_CondValid(toCheck) or isCondANDcondValid(toCheck) or isCondORcondValid(toCheck) or isPartCONDValid(
@@ -118,10 +110,8 @@ def splitANDCond(toCheck):
             if isConditionValid(cleanSpaces(firstCond)) and isConditionValid(cleanSpaces(secCond)):
                 return cleanSpaces(firstCond), cleanSpaces(secCond)
 
-
 def isOperatorContainAND(operator):
     return operator.getDescription().__contains__(" AND ") and isConditionValid(operator.getDescription())
-
 
 def notContainTheOtherTable(toCheck, table):
     if table == "R":
@@ -131,12 +121,10 @@ def notContainTheOtherTable(toCheck, table):
 
     return not toCheck.__contains__(otherTable)
 
-
 def isANDMainAlgebraBoolean(operator):
     return (isSimple_CondValid(operator) or isCondANDcondValid(operator) or isCondORcondValid(
         operator) or isPartCONDValid(
         operator)) and not isCondORcondValid(operator)
-
 
 def Rule4(operatorList):
     for operator in operatorList:
@@ -149,7 +137,6 @@ def Rule4(operatorList):
                     operatorList.insert(indexToAdd, (Sigma(secCond, None)))
                     break
 
-
 def Rule4a(operatorList):
     for operator in operatorList:
         if isinstance(operator, Sigma):
@@ -161,15 +148,13 @@ def Rule4a(operatorList):
                     operatorList[indexOfFirstSigma + 1] = temp
                     break
 
-
 def Rule6(operatorList):
     for operator in operatorList:
         if isinstance(operator, Sigma):
             indexOfSigma = operatorList.index(operator)
             if (indexOfSigma + 1 < operatorList.__len__()):
                 indexOfSigma = operatorList.index(operator)
-                if isinstance(operatorList[indexOfSigma + 1], Cartesian) or isinstance(operatorList[indexOfSigma + 1],
-                                                                                       NJoin):
+                if isinstance(operatorList[indexOfSigma + 1], Cartesian) or isinstance(operatorList[indexOfSigma + 1], NJoin):
                     cartesianOrNJoin = operatorList[indexOfSigma + 1]
                     tables = cartesianOrNJoin.getTables()
                     if not cartesianOrNJoin.isOperatorInFirst():
@@ -185,7 +170,6 @@ def Rule6(operatorList):
                             operatorList[indexOfSigma] = operatorList[indexOfSigma + 1]
                             operatorList[indexOfSigma + 1] = temp
                             break
-
 
 def Rule6a(operatorList):
     for operator in operatorList:
@@ -210,7 +194,6 @@ def Rule6a(operatorList):
                             operatorList[indexOfSigma + 1] = temp
                             break
 
-
 def Rule5a(operatorList):
     for operator in operatorList:
         if isinstance(operator, Pi):
@@ -230,14 +213,12 @@ def Rule5a(operatorList):
                             operatorList[indexOfPi + 1] = temp
                             break
 
-
 def oneOfCondInAllPredicateContainsBooleanAlgebra(listOfCond):
     for cond in listOfCond:
         if cond.__contains__("AND") or cond.__contains__("OR"):
             return True
 
     return False
-
 
 def getOnePredicateThatContainsAndRemoveFromList(allPredicate):
     for cond in allPredicate:
@@ -246,7 +227,6 @@ def getOnePredicateThatContainsAndRemoveFromList(allPredicate):
             allPredicate.remove(condToReturn)
 
             return condToReturn
-
 
 def splitANDorORCond(condToSplit):
     while (isSimple_CondValid(condToSplit) or isCondANDcondValid(condToSplit) or isCondORcondValid(
@@ -306,8 +286,7 @@ def splitANDorORCond(condToSplit):
                 if isConditionValid(cleanSpaces(firstCond)) and isConditionValid(cleanSpaces(secCond)):
                     return cleanSpaces(firstCond), cleanSpaces(secCond)
 
-
-def isEveryCondOfPredicateContainEqualSign(predicate):
+def splitCondIntoSimpleConditions(predicate):
     allPredicate = [predicate]
 
     while oneOfCondInAllPredicateContainsBooleanAlgebra(allPredicate):
@@ -316,6 +295,9 @@ def isEveryCondOfPredicateContainEqualSign(predicate):
         allPredicate.append(firstCond)
         allPredicate.append(secCond)
 
+    return allPredicate
+
+def wrapperSplitCondIntoSimpleConditions(allPredicate):
     for cond in allPredicate:
         if not cond.__contains__("=") or not cond.__contains__("S") or not cond.__contains__("R"):
             return False
@@ -327,7 +309,8 @@ def Rule11b(operatorList):
     for operator in operatorList:
         if isinstance(operator, Sigma):
             indexOfSigma = operatorList.index(operator)
-            if isEveryCondOfPredicateContainEqualSign(operator.getDescription()):
+            allPredicate = splitCondIntoSimpleConditions(operator.getDescription())
+            if wrapperSplitCondIntoSimpleConditions(allPredicate):
                 if (indexOfSigma + 1 < operatorList.__len__()):
                     if isinstance(operatorList[indexOfSigma + 1], Cartesian):
                         cartesian = operatorList[indexOfSigma + 1]
@@ -356,34 +339,27 @@ def getSelectStatement(query):
     fromIndex = query.find("FROM") - 1
     return query[afterSelectIndex:fromIndex]
 
-
 def getFromStatement(query):
     afterfromIndex = query.find("FROM") + 5
     whereIndex = query.find("WHERE") - 1
     return query[afterfromIndex:whereIndex]
-
 
 def getWhereStatement(query):
     afterWhereIndex = query.find("WHERE") + 6
     lastIndex = (str.__len__(query) - 1)
     return query[afterWhereIndex:]
 
-
 def cleanSpaces(query):
     return (' '.join(query.split()))
-
 
 def isCondOnIntgerAttribute(toCheck):
     return toCheck in VALID_ATTRIBUTES
 
-
 def isCondOnStringAttribute(toCheck):
     return False
 
-
 def isDigitValid(toCheck):
     return toCheck in DIGIT_NUMBER
-
 
 def isSameType(firstCond, secondCond):
     if (isCondOnStringAttribute(firstCond)):
@@ -391,10 +367,8 @@ def isSameType(firstCond, secondCond):
     else:  # isCondOnIntgerAttribute == true
         return isCondOnIntgerAttribute(secondCond) or isNumberValid(secondCond)
 
-
 def isAttributeValid(toCheck):
     return toCheck in VALID_ATTRIBUTES
-
 
 def isUnsigned_NumberValid(toCheck):
     if (str.__len__(toCheck) == 1):
@@ -402,13 +376,11 @@ def isUnsigned_NumberValid(toCheck):
 
     return isDigitValid(toCheck[0]) and isUnsigned_NumberValid(toCheck[1:])
 
-
 def isNumberValid(toCheck):
     if toCheck[0] in NUMBER_SIGN:
         toCheck = toCheck[1:]
 
     return isUnsigned_NumberValid(toCheck)
-
 
 def isStringValid(toCheck):
     lastIndex = str.__len__(toCheck) - 1
@@ -421,10 +393,8 @@ def isStringValid(toCheck):
 
     return False
 
-
 def isConstantValid(toCheck):
     return isNumberValid(toCheck) or isStringValid(toCheck) or isAttributeValid(toCheck)
-
 
 def isSimple_CondValid(toCheck):
     for op in REL_OPT:
@@ -436,7 +406,6 @@ def isSimple_CondValid(toCheck):
             return isConstantValid(firstCond) and isConstantValid(secondCond) and isSameType(firstCond, secondCond)
 
     return False
-
 
 def isCondORcondValid(toCheck):
     if ("OR" in toCheck):
@@ -467,7 +436,6 @@ def isCondORcondValid(toCheck):
 
     return False
 
-
 def isCondANDcondValid(toCheck):
     if ("AND" in toCheck):
         splited = str.split(toCheck, "AND")
@@ -497,7 +465,6 @@ def isCondANDcondValid(toCheck):
 
     return False
 
-
 def isPartCONDValid(toCheck):
     lastindex = str.__len__(toCheck) - 1
 
@@ -508,7 +475,6 @@ def isPartCONDValid(toCheck):
                 return isConditionValid(updatedCond)
 
     return False
-
 
 def isConditionValid(toCheck):
     return (isSimple_CondValid(toCheck) or isCondANDcondValid(toCheck)
@@ -545,7 +511,6 @@ def activeRule(operatorList, selectedRuleToActive):
     printExpression(operatorList)
     print("************************************")
 
-
 def partOne(operatorList):
     print(
         "1 - rule4" + "\n" +
@@ -556,7 +521,6 @@ def partOne(operatorList):
         '6 - rule11b')
     selectedRuleToActive = input("Please select rule:\n")
     activeRule(operatorList, selectedRuleToActive)
-
 
 def partTwo(operatorList):
     copy1 = copy.deepcopy(operatorList)  # make a deep copy of operatorList
@@ -574,7 +538,6 @@ def partTwo(operatorList):
     printFinalExpressions(operatorList, copy1, copy2, copy3, copy4)
     return copy1, copy2, copy3, copy4
 
-
 def printFinalExpressions(operatorList, copy1, copy2, copy3, copy4):
     print("Original expression: ", end="")
     printExpression(operatorList)
@@ -587,7 +550,6 @@ def printFinalExpressions(operatorList, copy1, copy2, copy3, copy4):
     printExpression(copy3)
     print("Expression 4: ", end="")
     printExpression(copy4)
-
 
 def active10RandomRules(operatorList):
     for i in range(10):
@@ -660,18 +622,125 @@ def partThree(operatorList):
 
     for operator in reversedList:
         if isinstance(operator, Cartesian):
-             #schemaAfterCartesian = sizeEstimationCartesian(schemaR, schemaS)
-    # elif isinstance(operator, Sigma):
-    #    sizeEstimationSigma()
-    # elif isinstance(operator, Pi):
-    #    sizeEstimationPi()
-    # elif isinstance(operator, NJoin):
-    #    sizeEstimationNJoin()
+            schemaAfterCartesian = sizeEstimationCartesian(schemaR, schemaS)
+        elif isinstance(operator, Sigma):
+            schemaAfterSigma = sizeEstimationSigma(schemaR, operator.getDescription())
+        # elif isinstance(operator, Pi):
+        #    sizeEstimationPi()
+        # elif isinstance(operator, NJoin):
+        #    sizeEstimationNJoin()
 
+def sizeEstimationSigma(schema1, simplecond):
+    printBeforeSigma(schema1)
+    schemaAfterSigma = copy.deepcopy(schema1)
+    numOfAttributes = simplecond.count(".")
+    if((numOfAttributes) > 1):
+        condWithTwoAttribute(schemaAfterSigma, simplecond)
+    elif((numOfAttributes) > 0):
+        condWithOneAttribute(schemaAfterSigma, simplecond)
+    elif(condISFalse(simplecond)):
+        schemaAfterSigma = TableData()
 
-def sizeEstimationCartesian():
-    return True
+    printAfterSigma(schemaAfterSigma)
+    return schemaAfterSigma
 
+def condWithTwoAttribute(schemaAfterSigma, simplecond):
+    splited = str.split(simplecond, "=", 1)
+    splited[0] = cleanSpaces(splited[0])
+    splited[1] = cleanSpaces(splited[1])
+    attributeName1 = getAttributeFromCond(splited[0])
+    numOfValuesInAttribute1 = getNumOfValues(schemaAfterSigma, attributeName1)
+    attributeName2 = getAttributeFromCond(splited[1])
+    numOfValuesInAttribute2 = getNumOfValues(schemaAfterSigma, attributeName2)
+    minNumOfValues = min(numOfValuesInAttribute1, numOfValuesInAttribute2)
+    schemaAfterSigma.numOfRows = minNumOfValues
+
+def condISFalse(simplecond):
+    splited = str.split(simplecond, "=", 1)
+    splited[0] = int(cleanSpaces(splited[0]))
+    splited[1] = int(cleanSpaces(splited[1]))
+    return not splited[0] == splited[1]
+
+def condWithOneAttribute(schemaAfterSigma, simplecond):
+    attributeName = getAttributeFromCond(simplecond)
+    numOfValuesInAttribute = getNumOfValues(schemaAfterSigma, attributeName)
+    schemaAfterSigma.numOfRows = numOfValuesInAttribute / schemaAfterSigma.numOfRows
+
+def getNumOfValues(schemaAfterSigma, simplecond):
+    res = None
+    if(simplecond == "A"):
+        res = schemaAfterSigma.numOfValuesInA
+    elif(simplecond == "B"):
+        res = schemaAfterSigma.numOfValuesInB
+    elif(simplecond == "C"):
+        res = schemaAfterSigma.numOfValuesInC
+    elif(simplecond == "D"):
+        res = schemaAfterSigma.numOfValuesInD
+    elif(simplecond == "E"):
+        res = schemaAfterSigma.numOfValuesInE
+    elif(simplecond == "F"):
+        res = schemaAfterSigma.numOfValuesInF
+    elif(simplecond == "H"):
+        res = schemaAfterSigma.numOfValuesInH
+    elif(simplecond == "I"):
+        res = schemaAfterSigma.numOfValuesInI
+    elif(simplecond == "RD"):
+        res = schemaAfterSigma.numOfValuesInRD
+    elif (simplecond == "SD"):
+        res = schemaAfterSigma.numOfValuesInSD
+    elif(simplecond == "RE"):
+        res = schemaAfterSigma.numOfValuesInRE
+    elif(simplecond == "SE"):
+        res = schemaAfterSigma.numOfValuesInSE
+    return res
+
+def getAttributeFromCond(simplecond):
+    attributeIndex = simplecond.find(".") + 1
+    return simplecond[attributeIndex]
+
+def printBeforeSigma(schema1):
+    print("input: n_schema1 " + str(schema1.numOfRows) + " r_schema1 " + str(schema1.numOfRows))
+
+def printAfterSigma(schemaAfterSigma):
+    print("output: n_newSchema " + str(schemaAfterSigma.numOfRows) + " r_newSchema " + str(schemaAfterSigma.sizeOfRow))
+
+def sizeEstimationCartesian(schema1, schema2):
+    printBeforeCartesian(schema1, schema2)
+    schemaAfterCartesian = TableData()
+    schemaAfterCartesian.numOfRows = schema1.numOfRows * schema2.numOfRows
+    schemaAfterCartesian.sizeOfRow = schema1.sizeOfRow + schema2.sizeOfRow
+    schemaAfterCartesian.numOfValuesInA = updateAttributeCartesian(schema1.numOfValuesInA, schema2.numOfValuesInA)
+    schemaAfterCartesian.numOfValuesInB = updateAttributeCartesian(schema1.numOfValuesInB, schema2.numOfValuesInB)
+    schemaAfterCartesian.numOfValuesInC = updateAttributeCartesian(schema1.numOfValuesInC, schema2.numOfValuesInC)
+    schemaAfterCartesian.numOfValuesInD = updateAttributeCartesian(schema1.numOfValuesInD, schema2.numOfValuesInD)
+    schemaAfterCartesian.numOfValuesInE = updateAttributeCartesian(schema1.numOfValuesInE, schema2.numOfValuesInE)
+    schemaAfterCartesian.numOfValuesInF = updateAttributeCartesian(schema1.numOfValuesInF, schema2.numOfValuesInF)
+    schemaAfterCartesian.numOfValuesInH = updateAttributeCartesian(schema1.numOfValuesInH, schema2.numOfValuesInH)
+    schemaAfterCartesian.numOfValuesInI = updateAttributeCartesian(schema1.numOfValuesInI, schema2.numOfValuesInI)
+    schemaAfterCartesian.numOfValuesInRD = updateSharedAttributeCartesian(schema1.numOfValuesInD, schema2.numOfValuesInD)
+    schemaAfterCartesian.numOfValuesInSD = updateSharedAttributeCartesian(schema1.numOfValuesInD, schema2.numOfValuesInD)
+    schemaAfterCartesian.numOfValuesInRE = updateSharedAttributeCartesian(schema1.numOfValuesInE, schema2.numOfValuesInE)
+    schemaAfterCartesian.numOfValuesInSE = updateSharedAttributeCartesian(schema1.numOfValuesInE, schema2.numOfValuesInE)
+    printAfterCartesian(schemaAfterCartesian)
+    return schemaAfterCartesian
+
+def printBeforeCartesian(schema1, schema2):
+    print("input: n_schema1 " + str(schema1.numOfRows) + " n_schema2 " + str(schema2.numOfRows) + " r_schema1 " + str(schema1.sizeOfRow) + " r_schema2 " + str(schema2.sizeOfRow))
+
+def printAfterCartesian(schemaAfterCartesian):
+    print("output: n_newSchema " + str(schemaAfterCartesian.numOfRows) + " r_newSchema " + str(schemaAfterCartesian.sizeOfRow))
+
+def updateAttributeCartesian(schema1Value, schema2Value):
+    if (schema1Value == 0):
+        return schema2Value
+    elif (schema2Value == 0):
+        return schema1Value
+    return 0
+
+def updateSharedAttributeCartesian(schema1Value, schema2Value):
+    if (schema1Value > 0 and schema2Value > 0):
+        return schema1Value * schema2Value
+    return 0
 
 def openAndReadFile():
     statisticsFile = open("statistics.txt", "r")
@@ -680,17 +749,13 @@ def openAndReadFile():
         line.rstrip('\n')
     return lines
 
-
 def reverseTheList(operatorList):
     reversedList = copy.deepcopy(operatorList)
     list.reverse(reversedList)
     return reversedList
 
-
 def makeSchemaR(lines):
     schemaR = TableData()
-    schemaR.schemeName = "R"
-    schemaR.attributes = "A,B,C,D,E"
     schemaR.numOfRows = getValueAfterEqual(lines[2])
     schemaR.sizeOfRow = 5 * 4
     schemaR.numOfValuesInA = getValueAfterEqual(lines[3])
@@ -700,11 +765,8 @@ def makeSchemaR(lines):
     schemaR.numOfValuesInE = getValueAfterEqual(lines[7])
     return schemaR
 
-
 def makeSchemaS(lines):
     schemaS = TableData()
-    schemaS.schemeName = "S"
-    schemaS.attributes = "D,E,F,H,I"
     schemaS.numOfRows = getValueAfterEqual(lines[11])
     schemaS.sizeOfRow = 5 * 4
     schemaS.numOfValuesInD = getValueAfterEqual(lines[12])
@@ -714,19 +776,16 @@ def makeSchemaS(lines):
     schemaS.numOfValuesInI = getValueAfterEqual(lines[16])
     return schemaS
 
-
 def getValueAfterEqual(line):
     equalIndex = line.find("=") + 1
     return int(line[equalIndex:])
 
-
-# todo more checks on OR query
 if __name__ == '__main__':
     queryInput = input("Please enter query (must contain SELECT, FROM, WHERE):\n")
     operatorList = makeExpression(queryInput)
-    # copyForPartOne = copy.deepcopy(operatorList)  # make a deep copy of operatorList
-    # copyForPartTwo = copy.deepcopy(operatorList)
-    # partOne(copyForPartOne)
-    # copy1, copy2, copy3, copy4 = partTwo(copyForPartTwo)
-    # partThree(copy1, copy2, copy3, copy4)
+    #copyForPartOne = copy.deepcopy(operatorList)  # make a deep copy of operatorList
+    #copyForPartTwo = copy.deepcopy(operatorList)
+    #partOne(copyForPartOne)
+    #copy1, copy2, copy3, copy4 = partTwo(copyForPartTwo)
+    #partThree(copy1, copy2, copy3, copy4)
     partThree(operatorList)
