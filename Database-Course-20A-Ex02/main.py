@@ -630,6 +630,24 @@ def partThree(operatorList):
         # elif isinstance(operator, NJoin):
         #    sizeEstimationNJoin()
 
+'''
+not finish (calculate cond mekonan)
+def recForCalculateSigma(schema1, predicate):
+    if isSimple_CondValid(predicate):
+        return sizeEstimationSigma(schema1, predicate)
+    else:
+        if oneOfCondInAllPredicateContainsBooleanAlgebra(predicate):
+            condToSplit = getOnePredicateThatContainsAndRemoveFromList(predicate)
+            firstCond, secCond = splitANDorORCond(predicate)
+
+            if condToSplit == "AND":
+                schemaAfterRec1 = recForCalculateSigma(schema1, firstCond)
+                schemaAfterRec2 = recForCalculateSigma(schema1, secCond)
+                return
+            elif condToSplit == "OR":
+                return recForCalculateSigma(schema1, firstCond) + recForCalculateSigma(schema1, secCond)
+'''
+
 def sizeEstimationSigma(schema1, simplecond):
     printBeforeSigma(schema1)
     schemaAfterSigma = copy.deepcopy(schema1)
