@@ -12,7 +12,11 @@ STRING_QUOTES = ('"', "'", "`", "’")
 NUMBER_SIGN = ('+', '-')
 DIGIT_NUMBER = ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9')
 REL_OPT = ('<=', '>=', '<>', '<', '>', '=')
+
 '''
+ // run on example
+SELECT R.C,S.F FROM S,R WHERE R.C=S.F;
+
 SELECT R.D,S.E FROM R,S WHERE S.D>4  AND R.A>10; // same as in example
 SELECT R.D,S.E FROM R,S WHERE S.D=R.D  AND S.E=R.E;  // 11b example
 
@@ -28,7 +32,6 @@ SELECT R.C,S.F FROM R,S WHERE (R.C=S.F) AND (R.C>59);
 SELECT R.E,    S.H FROM R,S WHERE     ((( (R.E=S.H) OR ((S.H>1000)) AND (R.E=100))));
 SELECT R.E,    S.H FROM R,S WHERE     ((( (R.E=S.H) AND ((S.H>1000)) OR (R.E=100))));
 SELECT R.E,    S.H FROM R,S WHERE     (R.E=S.H AND S.H>1000) OR (R.E=100);
-
 '''
 
 def makeExpression(query):
@@ -275,7 +278,7 @@ def splitANDorORCond(condToSplit):
                 if isConditionValid(cleanSpaces(firstCond)) and isConditionValid(cleanSpaces(secCond)):
                     return cleanSpaces(firstCond), cleanSpaces(secCond)
 
-def isEveryCondOfPredicateContainEqualSign(predicate):
+def splitCondIntoSimpleConditions(predicate):
     allPredicate = [predicate]
 
     while oneOfCondInAllPredicateContainsBooleanAlgebra(allPredicate):
@@ -284,6 +287,9 @@ def isEveryCondOfPredicateContainEqualSign(predicate):
         allPredicate.append(firstCond)
         allPredicate.append(secCond)
 
+    return allPredicate
+
+def wrapperSplitCondIntoSimpleConditions(allPredicate):
     for cond in allPredicate:
         if not cond.__contains__("=") or not cond.__contains__("S") or not cond.__contains__("R"):
             return False
@@ -294,7 +300,8 @@ def Rule11b(operatorList):
     for operator in operatorList:
         if isinstance(operator, Sigma):
             indexOfSigma = operatorList.index(operator)
-            if isEveryCondOfPredicateContainEqualSign(operator.getDescription()):
+            allPredicate = splitCondIntoSimpleConditions(operator.getDescription())
+            if wrapperSplitCondIntoSimpleConditions(allPredicate):
                 if (indexOfSigma + 1 < operatorList.__len__()):
                     if isinstance(operatorList[indexOfSigma + 1], Cartesian):
                         cartesian = operatorList[indexOfSigma + 1]
@@ -462,6 +469,7 @@ def isPartCONDValid(toCheck):
 def isConditionValid(toCheck):
     return (isSimple_CondValid(toCheck) or isCondANDcondValid(toCheck)
             or isCondORcondValid(toCheck) or isPartCONDValid(toCheck))
+
 #-----------------------------------------------------------------------------------------------------------------------
 
 def activeRule(operatorList, selectedRuleToActive):
@@ -546,17 +554,126 @@ def partThree(operatorList):
     schemaS = makeSchemaS(fileLines)
 
     for operator in reversedList:
-    if isinstance(operator, Cartesian):
-       schemaAfterCartesian = sizeEstimationCartesian(schemaR, schemaS)
-    # elif isinstance(operator, Sigma):
-    #    sizeEstimationSigma()
-    # elif isinstance(operator, Pi):
-    #    sizeEstimationPi()
-    # elif isinstance(operator, NJoin):
-    #    sizeEstimationNJoin()
+        if isinstance(operator, Cartesian):
+            schemaAfterCartesian = sizeEstimationCartesian(schemaR, schemaS)
+        elif isinstance(operator, Sigma):
+            schemaAfterSigma = sizeEstimationSigma(schemaR, operator.getDescription())
+        # elif isinstance(operator, Pi):
+        #    sizeEstimationPi()
+        # elif isinstance(operator, NJoin):
+        #    sizeEstimationNJoin()
 
-def sizeEstimationCartesian():
-    return True
+def sizeEstimationSigma(schema1, simplecond):
+    printBeforeSigma(schema1)
+    schemaAfterSigma = copy.deepcopy(schema1)
+    numOfAttributes = simplecond.count(".")
+    if((numOfAttributes) > 1):
+        condWithTwoAttribute(schemaAfterSigma, simplecond)
+    elif((numOfAttributes) > 0):
+        condWithOneAttribute(schemaAfterSigma, simplecond)
+    elif(condISFalse(simplecond)):
+        schemaAfterSigma = TableData()
+
+    printAfterSigma(schemaAfterSigma)
+    return schemaAfterSigma
+
+def condWithTwoAttribute(schemaAfterSigma, simplecond):
+    splited = str.split(simplecond, "=", 1)
+    splited[0] = cleanSpaces(splited[0])
+    splited[1] = cleanSpaces(splited[1])
+    attributeName1 = getAttributeFromCond(splited[0])
+    numOfValuesInAttribute1 = getNumOfValues(schemaAfterSigma, attributeName1)
+    attributeName2 = getAttributeFromCond(splited[1])
+    numOfValuesInAttribute2 = getNumOfValues(schemaAfterSigma, attributeName2)
+    minNumOfValues = min(numOfValuesInAttribute1, numOfValuesInAttribute2)
+    schemaAfterSigma.numOfRows = minNumOfValues
+
+def condISFalse(simplecond):
+    splited = str.split(simplecond, "=", 1)
+    splited[0] = int(cleanSpaces(splited[0]))
+    splited[1] = int(cleanSpaces(splited[1]))
+    return not splited[0] == splited[1]
+
+def condWithOneAttribute(schemaAfterSigma, simplecond):
+    attributeName = getAttributeFromCond(simplecond)
+    numOfValuesInAttribute = getNumOfValues(schemaAfterSigma, attributeName)
+    schemaAfterSigma.numOfRows = numOfValuesInAttribute / schemaAfterSigma.numOfRows
+
+def getNumOfValues(schemaAfterSigma, simplecond):
+    res = None
+    if(simplecond == "A"):
+        res = schemaAfterSigma.numOfValuesInA
+    elif(simplecond == "B"):
+        res = schemaAfterSigma.numOfValuesInB
+    elif(simplecond == "C"):
+        res = schemaAfterSigma.numOfValuesInC
+    elif(simplecond == "D"):
+        res = schemaAfterSigma.numOfValuesInD
+    elif(simplecond == "E"):
+        res = schemaAfterSigma.numOfValuesInE
+    elif(simplecond == "F"):
+        res = schemaAfterSigma.numOfValuesInF
+    elif(simplecond == "H"):
+        res = schemaAfterSigma.numOfValuesInH
+    elif(simplecond == "I"):
+        res = schemaAfterSigma.numOfValuesInI
+    elif(simplecond == "RD"):
+        res = schemaAfterSigma.numOfValuesInRD
+    elif (simplecond == "SD"):
+        res = schemaAfterSigma.numOfValuesInSD
+    elif(simplecond == "RE"):
+        res = schemaAfterSigma.numOfValuesInRE
+    elif(simplecond == "SE"):
+        res = schemaAfterSigma.numOfValuesInSE
+    return res
+
+def getAttributeFromCond(simplecond):
+    attributeIndex = simplecond.find(".") + 1
+    return simplecond[attributeIndex]
+
+def printBeforeSigma(schema1):
+    print("input: n_schema1 " + str(schema1.numOfRows) + " r_schema1 " + str(schema1.numOfRows))
+
+def printAfterSigma(schemaAfterSigma):
+    print("output: n_newSchema " + str(schemaAfterSigma.numOfRows) + " r_newSchema " + str(schemaAfterSigma.sizeOfRow))
+
+def sizeEstimationCartesian(schema1, schema2):
+    printBeforeCartesian(schema1, schema2)
+    schemaAfterCartesian = TableData()
+    schemaAfterCartesian.numOfRows = schema1.numOfRows * schema2.numOfRows
+    schemaAfterCartesian.sizeOfRow = schema1.sizeOfRow + schema2.sizeOfRow
+    schemaAfterCartesian.numOfValuesInA = updateAttributeCartesian(schema1.numOfValuesInA, schema2.numOfValuesInA)
+    schemaAfterCartesian.numOfValuesInB = updateAttributeCartesian(schema1.numOfValuesInB, schema2.numOfValuesInB)
+    schemaAfterCartesian.numOfValuesInC = updateAttributeCartesian(schema1.numOfValuesInC, schema2.numOfValuesInC)
+    schemaAfterCartesian.numOfValuesInD = updateAttributeCartesian(schema1.numOfValuesInD, schema2.numOfValuesInD)
+    schemaAfterCartesian.numOfValuesInE = updateAttributeCartesian(schema1.numOfValuesInE, schema2.numOfValuesInE)
+    schemaAfterCartesian.numOfValuesInF = updateAttributeCartesian(schema1.numOfValuesInF, schema2.numOfValuesInF)
+    schemaAfterCartesian.numOfValuesInH = updateAttributeCartesian(schema1.numOfValuesInH, schema2.numOfValuesInH)
+    schemaAfterCartesian.numOfValuesInI = updateAttributeCartesian(schema1.numOfValuesInI, schema2.numOfValuesInI)
+    schemaAfterCartesian.numOfValuesInRD = updateSharedAttributeCartesian(schema1.numOfValuesInD, schema2.numOfValuesInD)
+    schemaAfterCartesian.numOfValuesInSD = updateSharedAttributeCartesian(schema1.numOfValuesInD, schema2.numOfValuesInD)
+    schemaAfterCartesian.numOfValuesInRE = updateSharedAttributeCartesian(schema1.numOfValuesInE, schema2.numOfValuesInE)
+    schemaAfterCartesian.numOfValuesInSE = updateSharedAttributeCartesian(schema1.numOfValuesInE, schema2.numOfValuesInE)
+    printAfterCartesian(schemaAfterCartesian)
+    return schemaAfterCartesian
+
+def printBeforeCartesian(schema1, schema2):
+    print("input: n_schema1 " + str(schema1.numOfRows) + " n_schema2 " + str(schema2.numOfRows) + " r_schema1 " + str(schema1.sizeOfRow) + " r_schema2 " + str(schema2.sizeOfRow))
+
+def printAfterCartesian(schemaAfterCartesian):
+    print("output: n_newSchema " + str(schemaAfterCartesian.numOfRows) + " r_newSchema " + str(schemaAfterCartesian.sizeOfRow))
+
+def updateAttributeCartesian(schema1Value, schema2Value):
+    if (schema1Value == 0):
+        return schema2Value
+    elif (schema2Value == 0):
+        return schema1Value
+    return 0
+
+def updateSharedAttributeCartesian(schema1Value, schema2Value):
+    if (schema1Value > 0 and schema2Value > 0):
+        return schema1Value * schema2Value
+    return 0
 
 def openAndReadFile():
     statisticsFile = open("statistics.txt", "r")
@@ -572,8 +689,6 @@ def reverseTheList(operatorList):
 
 def makeSchemaR(lines):
     schemaR = TableData()
-    schemaR.schemeName = "R"
-    schemaR.attributes = "A,B,C,D,E"
     schemaR.numOfRows = getValueAfterEqual(lines[2])
     schemaR.sizeOfRow = 5*4
     schemaR.numOfValuesInA = getValueAfterEqual(lines[3])
@@ -585,8 +700,6 @@ def makeSchemaR(lines):
 
 def makeSchemaS(lines):
     schemaS = TableData()
-    schemaS.schemeName = "S"
-    schemaS.attributes = "D,E,F,H,I"
     schemaS.numOfRows = getValueAfterEqual(lines[11])
     schemaS.sizeOfRow = 5*4
     schemaS.numOfValuesInD = getValueAfterEqual(lines[12])
