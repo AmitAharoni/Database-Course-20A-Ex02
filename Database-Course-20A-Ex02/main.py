@@ -804,7 +804,6 @@ def getValueAfterEqual(line):
 #todo Cartesian shared attributes, D,E
 #todo work flow of query. (which schema to send next)
 #todo sizeEstimationPi()
-
 if __name__ == '__main__':
     queryInput = input("Please enter query (must contain SELECT, FROM, WHERE):\n")
     operatorList = makeExpression(queryInput)
