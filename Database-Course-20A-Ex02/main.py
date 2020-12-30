@@ -284,7 +284,7 @@ def splitCondIntoSimpleConditions(predicate):
 
 def wrapperSplitCondIntoSimpleConditions(allPredicate):
     for cond in allPredicate:
-        if not cond.__contains__("=") or not cond.__contains__("S") or not cond.__contains__("R"):
+        if (not cond.__contains__("=") or not cond.__contains__("S.E") or not cond.__contains__("R.E")) and (not cond.__contains__("=") or not cond.__contains__("S.D") or not cond.__contains__("R.D")) :
             return False
 
     return True
@@ -540,7 +540,6 @@ def active10RandomRules(operatorList):
 
 def afterCartesianOrNJoin(operator, rTableAfterAll, sTableAfterAll):
     if isinstance(operator, Cartesian):
-        print("*")
         return sizeEstimationCartesian(rTableAfterAll, sTableAfterAll)
     if isinstance(operator, NJoin):
         print("*")
@@ -553,7 +552,7 @@ def initializeFirstAndSecondTable(reversedList, schemaR, schemaS):
     operator = reversedList[index]
     lastUpdated = None
 
-    while operator != Cartesian or operator != NJoin:
+    while not isinstance(operator, Cartesian) and not isinstance(operator,NJoin):
         operator = reversedList[index]
 
         if isinstance(operator, Sigma):
@@ -565,7 +564,6 @@ def initializeFirstAndSecondTable(reversedList, schemaR, schemaS):
                 lastUpdated = "s"
             else: # not "S" and not "R" then have to be some shirshor from previous size estimation
                 if lastUpdated == "s":
-                    print("*")
                     sTableAfterAll = sizeEstimationSigma(sTableAfterAll, operator.getDescription())
                 elif lastUpdated == "r":
                     rTableAfterAll = sizeEstimationSigma(rTableAfterAll, operator.getDescription())
@@ -580,16 +578,15 @@ def initializeFirstAndSecondTable(reversedList, schemaR, schemaS):
                 lastUpdated = "s"
             else:  # not "S" and not "R" then have to be some shirshor from previous size estimation
                 if lastUpdated == "s":
-                    print("*")
                     sTableAfterAll = sizeEstimationPi(sTableAfterAll, operator.getDescription())
                 elif lastUpdated == "r":
-                    print("*")
                     rTableAfterAll = sizeEstimationPi(rTableAfterAll, operator.getDescription())
                 lastUpdated = None
 
+
         index += 1
 
-    return afterCartesianOrNJoin(operator[index], rTableAfterAll, sTableAfterAll)
+    return afterCartesianOrNJoin(reversedList[index], rTableAfterAll, sTableAfterAll), index
 
 def partThree(copy1, copy2, copy3, copy4):
     runPartThree(copy1)
@@ -602,16 +599,20 @@ def runPartThree(operatorList):
     fileLines = openAndReadFile()
     schemaR = makeSchemaR(fileLines)
     schemaS = makeSchemaS(fileLines)
-    #finalTable = initializeFirstAndSecondTable(reversedList, schemaR, schemaS)
-    for operator in reversedList:
-        if isinstance(operator, Cartesian):
-            schemaAfterCartesian = sizeEstimationCartesian(schemaR, schemaS)
-        elif isinstance(operator, Sigma):
-            schemaAfterSigma = sizeEstimationSigma(schemaAfterCartesian, operator.getDescription())
-        elif isinstance(operator, Pi):
-            schemaAfterPi = sizeEstimationPi(schemaAfterSigma, operator.getDescription())
+
+    finalTable,index = initializeFirstAndSecondTable(reversedList, schemaR, schemaS)
+    index += 1
+
+    while index != reversedList.__len__():
+        #if isinstance(operator, Cartesian):
+        #    schemaAfterCartesian = sizeEstimationCartesian(schemaR, schemaS)
+        if isinstance(reversedList[index], Sigma):
+            schemaAfterSigma = sizeEstimationSigma(finalTable, reversedList[index].getDescription())
+        elif isinstance(reversedList[index], Pi):
+            schemaAfterPi = sizeEstimationPi(finalTable, reversedList[index].getDescription())
         # elif isinstance(operator, NJoin):
         #    sizeEstimationNJoin()
+        index += 1
 
 def recForCalculateSigma(schemaAfterSigma, cond):
     if isSimple_CondValid(cond):
@@ -871,6 +872,6 @@ if __name__ == '__main__':
     copyForPartOne = copy.deepcopy(operatorList)
     copyForPartTwo = copy.deepcopy(operatorList)
     partOne(copyForPartOne)
-    copy1, copy2, copy3, copy4 = partTwo(copyForPartTwo)
+    #copy1, copy2, copy3, copy4 = partTwo(copyForPartTwo)
     #partThree(copy1, copy2, copy3, copy4) #thats the real when finish
-    runPartThree(operatorList)
+    #runPartThree(operatorList)
