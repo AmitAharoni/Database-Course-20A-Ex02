@@ -544,7 +544,7 @@ def afterCartesianOrNJoin(operator, rTableAfterAll, sTableAfterAll):
         return sizeEstimationCartesian(rTableAfterAll, sTableAfterAll)
     if isinstance(operator, NJoin):
         print("*")
-        return sizeEstimationNJoin(rTableAfterAll, sTableAfterAll)
+        #return sizeEstimationNJoin(rTableAfterAll, sTableAfterAll)
 
 def initializeFirstAndSecondTable(reversedList, schemaR, schemaS):
     rTableAfterAll = schemaR
