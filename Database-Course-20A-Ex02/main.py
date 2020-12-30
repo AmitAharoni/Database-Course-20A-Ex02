@@ -581,9 +581,9 @@ def initializeFirstAndSecondTable(reversedList, schemaR, schemaS):
                     print("*")
                     sTableAfterAll = sizeEstimationSigma(sTableAfterAll, operator.getDescription())
                 elif lastUpdated == "r":
-                     rTableAfterAll = sizeEstimationSigma(rTableAfterAll, operator.getDescription())
+                    rTableAfterAll = sizeEstimationSigma(rTableAfterAll, operator.getDescription())
 
-                 lastUpdated = None
+                lastUpdated = None
         if isinstance(operator, Pi):
             if operator.getTables().__contains__("R"):
                 rTableAfterAll = sizeEstimationPi(schemaR, operator.getDescription())
@@ -809,7 +809,7 @@ def getValueAfterEqual(line):
 
 def sizeEstimationPi(schema, attributes):   #PI[RD]
     newSchema = TableData()
-    listOfAttributes = str.split(simplecond, ",")
+    listOfAttributes = str.split(attributes, ",")
     for currAttribute in listOfAttributes:
         currAttribute = cleanSpaces(currAttribute)
         tableName, attributeName = getTableAndAttributeName(currAttribute)
