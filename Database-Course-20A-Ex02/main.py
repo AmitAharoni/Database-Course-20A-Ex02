@@ -15,12 +15,11 @@ REL_OPT = ('<=', '>=', '<>', '<', '>', '=')
 
 '''
  // run on example
-SELECT R.C,S.F FROM S,R WHERE R.C=S.F;
+SELECT R.C,S.F FROM S,R WHERE R.C=S.F; # run on example
+SELECT R.C,S.F FROM S,R WHERE R.E=S.E; # go to cartesian attributes RE, RE
+SELECT R.C,S.F FROM S,R WHERE (R.E=S.E AND R.C=S.F) AND (R.A = 2 AND 3=3);
 
-SELECT R.D,S.E FROM R,S WHERE S.D>4  AND R.A>10; // same as in example
-SELECT R.D,S.E FROM R,S WHERE S.D=R.D  AND S.E=R.E;  // 11b example
 
-SELECT R.C,S.F FROM S,R WHERE R.C=S.F AND S.F>1000; // run on example
 SELECT R.A FROM R WHERE R.A=25;
 SELECT R.B FROM R WHERE R.B=100;
 SELECT DISTINCT R.B FROM R WHERE R.B=25;
@@ -611,7 +610,6 @@ def partThree(operatorList):
     schemaR = makeSchemaR(fileLines)
     schemaS = makeSchemaS(fileLines)
     finalTable = None
-
     #finalTable = initializeFirstAndSecondTable(reversedList, schemaR, schemaS)
 
     for operator in reversedList:
@@ -624,19 +622,15 @@ def partThree(operatorList):
         # elif isinstance(operator, NJoin):
         #    sizeEstimationNJoin()
 
+#(R.E = S.E AND R.D = S.D) AND (R.I = S.I)
 def recForCalculateSigma(schemaAfterSigma, cond):
     if isSimple_CondValid(cond):
         return simpleCondSizeEstimation(schemaAfterSigma, cond) #get prob
     else:
         condAsList = [cond]
-        if oneOfCondInAllPredicateContainsBooleanAlgebra(condAsList):
-            condToSplit = getOnePredicateThatContainsAndRemoveFromList(condAsList)
-            firstCond, secCond = splitANDorORCond(condToSplit)
-
-            if condToSplit.__contains__("AND"):
-                return recForCalculateSigma(schemaAfterSigma, firstCond) * recForCalculateSigma(schemaAfterSigma, secCond)
-            elif  condToSplit.__contains__("OR"):
-                return recForCalculateSigma(schemaAfterSigma, firstCond) + recForCalculateSigma(schemaAfterSigma, secCond)
+        condToSplit = getOnePredicateThatContainsAndRemoveFromList(condAsList)
+        firstCond, secCond = splitANDorORCond(condToSplit)
+        return recForCalculateSigma(schemaAfterSigma, firstCond) * recForCalculateSigma(schemaAfterSigma, secCond)
 
 def sizeEstimationSigma(schema1, cond):
     printBeforeSigma(schema1)
@@ -648,13 +642,12 @@ def sizeEstimationSigma(schema1, cond):
 
 def simpleCondSizeEstimation(schemaAfterSigma, simpleCond):
     numOfAttributes = simpleCond.count(".")
-    if((numOfAttributes == 1)):
+    if(numOfAttributes == 0):
+        return condWithOutAttribute(schemaAfterSigma, simpleCond)
+    elif((numOfAttributes == 1)):
         return condWithOneAttribute(schemaAfterSigma, simpleCond)
     elif((numOfAttributes) == 2):
         return condWithTwoAttribute(schemaAfterSigma, simpleCond)
-    else:
-        return condWithOutAttribute(schemaAfterSigma, simpleCond)
-
 
 def condWithOutAttribute(schemaAfterSigma, simpleCond):
     splited = str.split(simpleCond, "=", 1)
@@ -669,12 +662,16 @@ def condWithTwoAttribute(schemaAfterSigma, simplecond):
     splited = str.split(simplecond, "=", 1)
     splited[0] = cleanSpaces(splited[0])
     splited[1] = cleanSpaces(splited[1])
+    tableName1 = getTableFromCond(splited[0])
     attributeName1 = getAttributeFromCond(splited[0])
-    numOfValuesInAttribute1 = getNumOfValues(schemaAfterSigma, attributeName1)
+    tableName2 = getTableFromCond(splited[1])
     attributeName2 = getAttributeFromCond(splited[1])
-    numOfValuesInAttribute2 = getNumOfValues(schemaAfterSigma, attributeName2)
-    minNumOfValues = min(numOfValuesInAttribute1, numOfValuesInAttribute2)
-    return (1 / minNumOfValues)
+    if(tableName1 == tableName2 and attributeName1 == attributeName2):
+        return 1
+    numOfValuesInAttribute1 = getNumOfValues(schemaAfterSigma, attributeName1, tableName1)
+    numOfValuesInAttribute2 = getNumOfValues(schemaAfterSigma, attributeName2, tableName2)
+    maxNumOfValues = max(numOfValuesInAttribute1, numOfValuesInAttribute2)
+    return (1 / maxNumOfValues)
 
 def condISFalse(simplecond):
     splited = str.split(simplecond, "=", 1)
@@ -684,42 +681,49 @@ def condISFalse(simplecond):
 
 def condWithOneAttribute(schemaAfterSigma, simplecond):
     attributeName = getAttributeFromCond(simplecond)
-    return (1 / getNumOfValues(schemaAfterSigma, attributeName))
+    tableName = getTableFromCond(simplecond)
+    return (1 / getNumOfValues(schemaAfterSigma, attributeName, tableName))
 
-def getNumOfValues(schemaAfterSigma, simplecond):
+def getNumOfValues(schemaAfterSigma, attribute, table):
     res = None
-    if(simplecond == "A"):
+    if(attribute == "A"):
         res = schemaAfterSigma.numOfValuesInA
-    elif(simplecond == "B"):
+    elif(attribute == "B"):
         res = schemaAfterSigma.numOfValuesInB
-    elif(simplecond == "C"):
+    elif(attribute == "C"):
         res = schemaAfterSigma.numOfValuesInC
-    elif(simplecond == "D"):
+    elif(attribute == "D"):
         res = schemaAfterSigma.numOfValuesInD
-    elif(simplecond == "E"):
+    elif(attribute == "E"):
         res = schemaAfterSigma.numOfValuesInE
-    elif(simplecond == "F"):
+    elif(attribute == "F"):
         res = schemaAfterSigma.numOfValuesInF
-    elif(simplecond == "H"):
+    elif(attribute == "H"):
         res = schemaAfterSigma.numOfValuesInH
-    elif(simplecond == "I"):
+    elif(attribute == "I"):
         res = schemaAfterSigma.numOfValuesInI
-    elif(simplecond == "RD"):
-        res = schemaAfterSigma.numOfValuesInRD
-    elif (simplecond == "SD"):
-        res = schemaAfterSigma.numOfValuesInSD
-    elif(simplecond == "RE"):
-        res = schemaAfterSigma.numOfValuesInRE
-    elif(simplecond == "SE"):
-        res = schemaAfterSigma.numOfValuesInSE
+    if (res == 0):
+        attribute = table + attribute
+        if(attribute == "RD"):
+            res = schemaAfterSigma.numOfValuesInRD
+        elif (attribute == "SD"):
+            res = schemaAfterSigma.numOfValuesInSD
+        elif(attribute == "RE"):
+            res = schemaAfterSigma.numOfValuesInRE
+        elif(attribute == "SE"):
+            res = schemaAfterSigma.numOfValuesInSE
     return res
 
 def getAttributeFromCond(simplecond):
     attributeIndex = simplecond.find(".") + 1
     return simplecond[attributeIndex]
 
+def getTableFromCond(simplecond):
+    tableIndex = simplecond.find(".") - 1
+    return simplecond[tableIndex]
+
 def printBeforeSigma(schema1):
-    print("input: n_schema1 " + str(schema1.numOfRows) + " r_schema1 " + str(schema1.numOfRows))
+    print("input: n_schema1 " + str(schema1.numOfRows) + " r_schema1 " + str(schema1.sizeOfRow))
 
 def printAfterSigma(schemaAfterSigma):
     print("output: n_newSchema " + str(schemaAfterSigma.numOfRows) + " r_newSchema " + str(schemaAfterSigma.sizeOfRow))
@@ -804,6 +808,7 @@ def getValueAfterEqual(line):
 #todo Cartesian shared attributes, D,E
 #todo work flow of query. (which schema to send next)
 #todo sizeEstimationPi()
+
 if __name__ == '__main__':
     queryInput = input("Please enter query (must contain SELECT, FROM, WHERE):\n")
     operatorList = makeExpression(queryInput)
