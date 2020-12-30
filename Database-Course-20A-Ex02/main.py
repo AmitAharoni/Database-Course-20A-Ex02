@@ -118,8 +118,12 @@ def Rule4(operatorList):
                 if isANDMainAlgebraBoolean(operator.getDescription()):
                     indexToAdd = operatorList.index(operator) + 1
                     firstCond, secCond = splitANDCond(cleanSpaces(operator.getDescription()))
+                    secondSigma = Sigma(secCond, None)
+                    if operator.getTables() != None:
+                        secondSigma.setTables(operator.getTables())
+                        operator.setTables(None)
                     operator.setDescription(firstCond)
-                    operatorList.insert(indexToAdd, (Sigma(secCond, None)))
+                    operatorList.insert(indexToAdd, secondSigma)
                     break
 
 def Rule4a(operatorList):
@@ -128,6 +132,9 @@ def Rule4a(operatorList):
             indexOfFirstSigma = operatorList.index(operator)
             if indexOfFirstSigma < operatorList.__len__() - 1:
                 if isinstance(operatorList[indexOfFirstSigma + 1], Sigma):
+                    if operator.getTables() != None:
+                        operatorList[indexOfFirstSigma + 1].setTables(operator.getTables())
+                        operator.setTables(None)
                     temp = operatorList[indexOfFirstSigma]
                     operatorList[indexOfFirstSigma] = operatorList[indexOfFirstSigma + 1]
                     operatorList[indexOfFirstSigma + 1] = temp
@@ -612,7 +619,7 @@ def runPartThree(operatorList):
     finalTable,index = initializeFirstAndSecondTable(reversedList, schemaR, schemaS)
     index += 1
 
-    while index != reversedList.__len__():
+    while index != reversedList.__len__() - 1:
         #if isinstance(operator, Cartesian):
         #    schemaAfterCartesian = sizeEstimationCartesian(schemaR, schemaS)
         if isinstance(reversedList[index], Sigma):
@@ -881,6 +888,6 @@ if __name__ == '__main__':
     copyForPartOne = copy.deepcopy(operatorList)
     copyForPartTwo = copy.deepcopy(operatorList)
     partOne(copyForPartOne)
-    #copy1, copy2, copy3, copy4 = partTwo(copyForPartTwo)
-    #partThree(copy1, copy2, copy3, copy4) #thats the real when finish
-    #runPartThree(operatorList)
+    copy1, copy2, copy3, copy4 = partTwo(copyForPartTwo)
+    partThree(copy1, copy2, copy3, copy4) #thats the real when finish
+    runPartThree(operatorList)
