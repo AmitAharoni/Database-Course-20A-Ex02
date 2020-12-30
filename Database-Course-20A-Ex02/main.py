@@ -554,10 +554,10 @@ def active10RandomRules(operatorList):
 def afterCartesianOrNJoin(operator, rTableAfterAll, sTableAfterAll):
     if isinstance(operator, Cartesian):
         print("*")
-        #return sizeEstimationCartesian(rTableAfterAll, sTableAfterAll)
+        return sizeEstimationCartesian(rTableAfterAll, sTableAfterAll)
     if isinstance(operator, NJoin):
         print("*")
-        #return sizeEstimationNJoin(rTableAfterAll, sTableAfterAll)
+        return sizeEstimationNJoin(rTableAfterAll, sTableAfterAll)
 
 def initializeFirstAndSecondTable(reversedList, schemaR, schemaS):
     rTableAfterAll = schemaR
@@ -571,33 +571,33 @@ def initializeFirstAndSecondTable(reversedList, schemaR, schemaS):
 
         if isinstance(operator, Sigma):
             if operator.getTables().__contains__("R"):
-                #rTableAfterAll = sizeEstimationSigma(schemaR, operator.getDescription())
+                rTableAfterAll = sizeEstimationSigma(schemaR, operator.getDescription())
                 lastUpdated = "r"
             elif operator.getTables().__contains__("S"):
-                #sTableAfterAll = sizeEstimationSigma(schemaS, operator.getDescription())
+                sTableAfterAll = sizeEstimationSigma(schemaS, operator.getDescription())
                 lastUpdated = "s"
             else: # not "S" and not "R" then have to be some shirshor from previous size estimation
                 if lastUpdated == "s":
                     print("*")
-                    # sTableAfterAll = sizeEstimationSigma(sTableAfterAll, operator.getDescription())
+                    sTableAfterAll = sizeEstimationSigma(sTableAfterAll, operator.getDescription())
                 elif lastUpdated == "r":
-                    # rTableAfterAll = sizeEstimationSigma(rTableAfterAll, operator.getDescription())
+                     rTableAfterAll = sizeEstimationSigma(rTableAfterAll, operator.getDescription())
 
                  lastUpdated = None
         if isinstance(operator, Pi):
             if operator.getTables().__contains__("R"):
-                # rTableAfterAll = sizeEstimationPi(schemaR, operator.getDescription())
+                rTableAfterAll = sizeEstimationPi(schemaR, operator.getDescription())
                 lastUpdated = "r"
             elif operator.getTables().__contains__("S"):
-                # sTableAfterAll = sizeEstimationPi(schemaS, operator.getDescription())
+                sTableAfterAll = sizeEstimationPi(schemaS, operator.getDescription())
                 lastUpdated = "s"
             else:  # not "S" and not "R" then have to be some shirshor from previous size estimation
                 if lastUpdated == "s":
                     print("*")
-                # sTableAfterAll = sizeEstimationPi(sTableAfterAll, operator.getDescription())
+                    sTableAfterAll = sizeEstimationPi(sTableAfterAll, operator.getDescription())
                 elif lastUpdated == "r":
                     print("*")
-                    # rTableAfterAll = sizeEstimationPi(rTableAfterAll, operator.getDescription())
+                    rTableAfterAll = sizeEstimationPi(rTableAfterAll, operator.getDescription())
                 lastUpdated = None
 
         index += 1
@@ -609,8 +609,8 @@ def partThree(operatorList):
     fileLines = openAndReadFile()
     schemaR = makeSchemaR(fileLines)
     schemaS = makeSchemaS(fileLines)
-    finalTable = None
-    #finalTable = initializeFirstAndSecondTable(reversedList, schemaR, schemaS)
+    finalTable = initializeFirstAndSecondTable(reversedList, schemaR, schemaS)
+
 
     for operator in reversedList:
         if isinstance(operator, Cartesian):
