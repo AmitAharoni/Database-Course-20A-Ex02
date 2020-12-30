@@ -283,11 +283,20 @@ def splitCondIntoSimpleConditions(predicate):
     return allPredicate
 
 def wrapperSplitCondIntoSimpleConditions(allPredicate):
+    isEexist = False
+    isDexist = False
     for cond in allPredicate:
         if (not cond.__contains__("=") or not cond.__contains__("S.E") or not cond.__contains__("R.E")) and (not cond.__contains__("=") or not cond.__contains__("S.D") or not cond.__contains__("R.D")) :
             return False
+        if cond.__contains__("=") and cond.__contains__("S.E") and cond.__contains__("R.E"):
+            isEexist = True
+        if cond.__contains__("=") and cond.__contains__("S.D") and cond.__contains__("R.D"):
+            isDexist = True
 
-    return True
+    if isDexist == True and isEexist == True:
+        return True
+    else:
+        return False
 
 def Rule11b(operatorList):
     for operator in operatorList:
