@@ -617,8 +617,8 @@ def partThree(operatorList):
             schemaAfterCartesian = sizeEstimationCartesian(schemaR, schemaS)
         elif isinstance(operator, Sigma):
             schemaAfterSigma = sizeEstimationSigma(schemaAfterCartesian, operator.getDescription())
-        # elif isinstance(operator, Pi):
-        #    sizeEstimationPi()
+        elif isinstance(operator, Pi):
+            sizeEstimationPi(schema, operator.getDescription())
         # elif isinstance(operator, NJoin):
         #    sizeEstimationNJoin()
 
@@ -632,9 +632,9 @@ def recForCalculateSigma(schemaAfterSigma, cond):
         firstCond, secCond = splitANDorORCond(condToSplit)
         return recForCalculateSigma(schemaAfterSigma, firstCond) * recForCalculateSigma(schemaAfterSigma, secCond)
 
-def sizeEstimationSigma(schema1, cond):
-    printBeforeSigma(schema1)
-    schemaAfterSigma = copy.deepcopy(schema1)
+def sizeEstimationSigma(schema, cond):
+    printBeforeSigma(schema)
+    schemaAfterSigma = copy.deepcopy(schema)
     prob = recForCalculateSigma(schemaAfterSigma, cond)
     schemaAfterSigma.numOfRows = int(prob * schemaAfterSigma.numOfRows)
     printAfterSigma(schemaAfterSigma)
@@ -658,14 +658,17 @@ def condWithOutAttribute(schemaAfterSigma, simpleCond):
     else:
         return 0
 
+def getTableAndAttributeName(expr):
+    tableName = getTableFromCond(expr)
+    attributeName = getAttributeFromCond(expr)
+    return tableName, attributeName
+
 def condWithTwoAttribute(schemaAfterSigma, simplecond):
     splited = str.split(simplecond, "=", 1)
     splited[0] = cleanSpaces(splited[0])
     splited[1] = cleanSpaces(splited[1])
-    tableName1 = getTableFromCond(splited[0])
-    attributeName1 = getAttributeFromCond(splited[0])
-    tableName2 = getTableFromCond(splited[1])
-    attributeName2 = getAttributeFromCond(splited[1])
+    tableName1, attributeName1 = getTableAndAttributeName(splited[0])
+    tableName2, attributeName2 = getTableAndAttributeName(splited[1])
     if(tableName1 == tableName2 and attributeName1 == attributeName2):
         return 1
     numOfValuesInAttribute1 = getNumOfValues(schemaAfterSigma, attributeName1, tableName1)
@@ -804,10 +807,59 @@ def getValueAfterEqual(line):
     equalIndex = line.find("=") + 1
     return int(line[equalIndex:])
 
+def sizeEstimationPi(schema, attributes):   #PI[RD]
+    newSchema = TableData()
+    listOfAttributes = str.split(simplecond, ",")
+    for currAttribute in listOfAttributes:
+        currAttribute = cleanSpaces(currAttribute)
+        tableName, attributeName = getTableAndAttributeName(currAttribute)
+        currNumOfValue = getNumOfValues(schema, attributeName, tableName)
+        if (currNumOfValue != 0):
+            updateNumOfValues(newSchema, attributeName, tableName, currNumOfValue)
+
+def updateNumOfValues(newSchema, attribute, tableName, currNumOfValue):
+    if(attribute == "A"):
+        newSchema.numOfValuesInA = currNumOfValue
+    elif(attribute == "B"):
+        newSchema.numOfValuesInB = currNumOfValue
+    elif(attribute == "C"):
+        newSchema.numOfValuesInC = currNumOfValue
+    elif(attribute == "D"):
+        if(newSchema.numOfValuesInD != 0):
+            if(tableName == "R"):
+                newSchema.numOfValuesInRD = currNumOfValue
+                newSchema.numOfValuesInSD = newSchema.numOfValuesInD
+                newSchema.numOfValuesInD = 0
+            elif(tableName == "S"):
+                newSchema.numOfValuesInSD = currNumOfValue
+                newSchema.numOfValuesInRD = newSchema.numOfValuesInD
+                newSchema.numOfValuesInD = 0
+
+        newSchema.numOfValuesInD = currNumOfValue
+
+    elif(attribute == "E"):
+        if(newSchema.numOfValuesInE != 0):
+            if(tableName == "R"):
+                newSchema.numOfValuesInRE = currNumOfValue
+                newSchema.numOfValuesInSE = newSchema.numOfValuesInE
+                newSchema.numOfValuesInE = 0
+            elif(tableName == "S"):
+                newSchema.numOfValuesInSE = currNumOfValue
+                newSchema.numOfValuesInRE = newSchema.numOfValuesInE
+                newSchema.numOfValuesInE = 0
+
+        newSchema.numOfValuesInE = currNumOfValue
+
+    elif(attribute == "F"):
+        newSchema.numOfValuesInF = currNumOfValue
+    elif(attribute == "H"):
+        newSchema.numOfValuesInH = currNumOfValue
+    elif(attribute == "I"):
+        newSchema.numOfValuesInI = currNumOfValue
+
 #todo cond with and && or
 #todo Cartesian shared attributes, D,E
 #todo work flow of query. (which schema to send next)
-#todo sizeEstimationPi()
 
 if __name__ == '__main__':
     queryInput = input("Please enter query (must contain SELECT, FROM, WHERE):\n")
