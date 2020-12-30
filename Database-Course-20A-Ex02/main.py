@@ -14,23 +14,9 @@ DIGIT_NUMBER = ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9')
 REL_OPT = ('<=', '>=', '<>', '<', '>', '=')
 
 '''
- // run on example
 SELECT R.C,S.F FROM S,R WHERE R.C=S.F; # run on example
 SELECT R.C,S.F FROM S,R WHERE R.E=S.E; # go to cartesian attributes RE, RE
 SELECT R.C,S.F FROM S,R WHERE (R.E=S.E AND R.C=S.F) AND (R.A = 2 AND 3=3);
-
-
-SELECT R.A FROM R WHERE R.A=25;
-SELECT R.B FROM R WHERE R.B=100;
-SELECT DISTINCT R.B FROM R WHERE R.B=25;
-SELECT R.B,S.D FROM R,S WHERE R.B=S.D;
-SELECT R.C,S.F FROM S,R WHERE R.C=S.F AND S.F>1000;
-SELECT R.C,S.F FROM R,S WHERE ((R.C=S.F) AND (S.F>1000)) AND (R.C=S.F);
-SELECT      R.A ,R.A FROM       R,S WHERE (((R.A    =100  )     AND R.A=100) AND (R.A>59) AND (R.A= 5));
-SELECT R.C,S.F FROM R,S WHERE (R.C=S.F) AND (R.C>59);
-SELECT R.E,    S.H FROM R,S WHERE     ((( (R.E=S.H) OR ((S.H>1000)) AND (R.E=100))));
-SELECT R.E,    S.H FROM R,S WHERE     ((( (R.E=S.H) AND ((S.H>1000)) OR (R.E=100))));
-SELECT R.E,    S.H FROM R,S WHERE     (R.E=S.H AND S.H>1000) OR (R.E=100);
 '''
 
 def makeExpression(query):
@@ -480,28 +466,29 @@ def isConditionValid(toCheck):
 def activeRule(operatorList, selectedRuleToActive):
     print("Before:", end="")
     printExpression(operatorList)
+    selectedRule = None
     if selectedRuleToActive == 1 or selectedRuleToActive == "1":
-        print("Rule4:")
+        selectedRule = "Rule4"
         Rule4(operatorList)
     elif selectedRuleToActive == 2 or selectedRuleToActive == "2":
-        print("Rule4a:")
+        selectedRule = "Rule4a"
         Rule4a(operatorList)
     elif selectedRuleToActive == 3 or selectedRuleToActive == "3":
-        print("Rule6:")
+        selectedRule ="Rule6"
         Rule6(operatorList)
     elif selectedRuleToActive == 4 or selectedRuleToActive == "4":
-        print("Rule6a:")
+        selectedRule ="Rule6a"
         Rule6a(operatorList)
     elif selectedRuleToActive == 5 or selectedRuleToActive == "5":
-        print("Rule5a:")
+        selectedRule ="Rule5a"
         Rule5a(operatorList)
     elif selectedRuleToActive == 6 or selectedRuleToActive == "6":
-        print("Rule11b:")
+        selectedRule ="Rule11b"
         Rule11b(operatorList)
     elif (True):
         print("invalid input, no rule was activated")
 
-    print("after:", end="")
+    print("after " + selectedRule + ":", end="")
     printExpression(operatorList)
     print("************************************")
 
@@ -517,7 +504,7 @@ def partOne(operatorList):
     activeRule(operatorList, selectedRuleToActive)
 
 def partTwo(operatorList):
-    copy1 = copy.deepcopy(operatorList)  # make a deep copy of operatorList
+    copy1 = copy.deepcopy(operatorList)
     copy2 = copy.deepcopy(operatorList)
     copy3 = copy.deepcopy(operatorList)
     copy4 = copy.deepcopy(operatorList)
@@ -604,25 +591,28 @@ def initializeFirstAndSecondTable(reversedList, schemaR, schemaS):
 
     return afterCartesianOrNJoin(operator[index], rTableAfterAll, sTableAfterAll)
 
-def partThree(operatorList):
+def partThree(copy1, copy2, copy3, copy4):
+    runPartThree(copy1)
+    runPartThree(copy2)
+    runPartThree(copy3)
+    runPartThree(copy4)
+
+def runPartThree(operatorList):
     reversedList = reverseTheList(operatorList)
     fileLines = openAndReadFile()
     schemaR = makeSchemaR(fileLines)
     schemaS = makeSchemaS(fileLines)
-    finalTable = initializeFirstAndSecondTable(reversedList, schemaR, schemaS)
-
-
+    #finalTable = initializeFirstAndSecondTable(reversedList, schemaR, schemaS)
     for operator in reversedList:
         if isinstance(operator, Cartesian):
             schemaAfterCartesian = sizeEstimationCartesian(schemaR, schemaS)
         elif isinstance(operator, Sigma):
             schemaAfterSigma = sizeEstimationSigma(schemaAfterCartesian, operator.getDescription())
         elif isinstance(operator, Pi):
-            sizeEstimationPi(schema, operator.getDescription())
+            schemaAfterPi = sizeEstimationPi(schemaAfterSigma, operator.getDescription())
         # elif isinstance(operator, NJoin):
         #    sizeEstimationNJoin()
 
-#(R.E = S.E AND R.D = S.D) AND (R.I = S.I)
 def recForCalculateSigma(schemaAfterSigma, cond):
     if isSimple_CondValid(cond):
         return simpleCondSizeEstimation(schemaAfterSigma, cond) #get prob
@@ -633,11 +623,11 @@ def recForCalculateSigma(schemaAfterSigma, cond):
         return recForCalculateSigma(schemaAfterSigma, firstCond) * recForCalculateSigma(schemaAfterSigma, secCond)
 
 def sizeEstimationSigma(schema, cond):
-    printBeforeSigma(schema)
+    printBeforeOperation(schema, "SIGMA")
     schemaAfterSigma = copy.deepcopy(schema)
     prob = recForCalculateSigma(schemaAfterSigma, cond)
     schemaAfterSigma.numOfRows = int(prob * schemaAfterSigma.numOfRows)
-    printAfterSigma(schemaAfterSigma)
+    printAfterOperation(schemaAfterSigma, "SIGMA")
     return schemaAfterSigma
 
 def simpleCondSizeEstimation(schemaAfterSigma, simpleCond):
@@ -725,11 +715,11 @@ def getTableFromCond(simplecond):
     tableIndex = simplecond.find(".") - 1
     return simplecond[tableIndex]
 
-def printBeforeSigma(schema1):
-    print("input: n_schema1 " + str(schema1.numOfRows) + " r_schema1 " + str(schema1.sizeOfRow))
+def printBeforeOperation(schemaBefore, operationName):
+    print("Before " + operationName + ": n_schemaBefore " + str(schemaBefore.numOfRows) + " r_schemaBefore " + str(schemaBefore.sizeOfRow))
 
-def printAfterSigma(schemaAfterSigma):
-    print("output: n_newSchema " + str(schemaAfterSigma.numOfRows) + " r_newSchema " + str(schemaAfterSigma.sizeOfRow))
+def printAfterOperation(schemaAfter, operationName):
+    print("After " + operationName + ": n_schemaAfter " + str(schemaAfter.numOfRows) + " r_schemaAfter " + str(schemaAfter.sizeOfRow))
 
 def sizeEstimationCartesian(schema1, schema2):
     printBeforeCartesian(schema1, schema2)
@@ -748,14 +738,11 @@ def sizeEstimationCartesian(schema1, schema2):
     schemaAfterCartesian.numOfValuesInSD = updateSharedAttributeCartesian(schema1.numOfValuesInD, schema2.numOfValuesInD)
     schemaAfterCartesian.numOfValuesInRE = updateSharedAttributeCartesian(schema1.numOfValuesInE, schema2.numOfValuesInE)
     schemaAfterCartesian.numOfValuesInSE = updateSharedAttributeCartesian(schema1.numOfValuesInE, schema2.numOfValuesInE)
-    printAfterCartesian(schemaAfterCartesian)
+    printAfterOperation(schemaAfterCartesian, "Cartesian")
     return schemaAfterCartesian
 
 def printBeforeCartesian(schema1, schema2):
-    print("input: n_schema1 " + str(schema1.numOfRows) + " n_schema2 " + str(schema2.numOfRows) + " r_schema1 " + str(schema1.sizeOfRow) + " r_schema2 " + str(schema2.sizeOfRow))
-
-def printAfterCartesian(schemaAfterCartesian):
-    print("output: n_newSchema " + str(schemaAfterCartesian.numOfRows) + " r_newSchema " + str(schemaAfterCartesian.sizeOfRow))
+    print("Before Cartesian: n_schema1 " + str(schema1.numOfRows) + " n_schema2 " + str(schema2.numOfRows) + " r_schema1 " + str(schema1.sizeOfRow) + " r_schema2 " + str(schema2.sizeOfRow))
 
 def updateAttributeCartesian(schema1Value, schema2Value):
     if (schema1Value == 0):
@@ -807,25 +794,30 @@ def getValueAfterEqual(line):
     equalIndex = line.find("=") + 1
     return int(line[equalIndex:])
 
-def sizeEstimationPi(schema, attributes):   #PI[RD]
-    newSchema = TableData()
-    listOfAttributes = str.split(attributes, ",")
-    for currAttribute in listOfAttributes:
-        currAttribute = cleanSpaces(currAttribute)
-        tableName, attributeName = getTableAndAttributeName(currAttribute)
-        currNumOfValue = getNumOfValues(schema, attributeName, tableName)
-        if (currNumOfValue != 0):
-            updateNumOfValues(newSchema, attributeName, tableName, currNumOfValue)
-
-def updateNumOfValues(newSchema, attribute, tableName, currNumOfValue):
+def updateNumOfValues(newSchema, attribute, tableName, currNumOfValue, updateCounter):
     if(attribute == "A"):
         newSchema.numOfValuesInA = currNumOfValue
+        return updateCounter + 1
     elif(attribute == "B"):
         newSchema.numOfValuesInB = currNumOfValue
+        return updateCounter + 1
     elif(attribute == "C"):
         newSchema.numOfValuesInC = currNumOfValue
+        return updateCounter + 1
+    elif(attribute == "F"):
+        newSchema.numOfValuesInF = currNumOfValue
+        return updateCounter + 1
+    elif(attribute == "H"):
+        newSchema.numOfValuesInH = currNumOfValue
+        return updateCounter + 1
+    elif(attribute == "I"):
+        newSchema.numOfValuesInI = currNumOfValue
+        return updateCounter + 1
     elif(attribute == "D"):
-        if(newSchema.numOfValuesInD != 0):
+        if(newSchema.numOfValuesInD == 0):
+            newSchema.numOfValuesInD = currNumOfValue
+            return updateCounter + 1
+        elif(newSchema.numOfValuesInD != 0):
             if(tableName == "R"):
                 newSchema.numOfValuesInRD = currNumOfValue
                 newSchema.numOfValuesInSD = newSchema.numOfValuesInD
@@ -834,11 +826,11 @@ def updateNumOfValues(newSchema, attribute, tableName, currNumOfValue):
                 newSchema.numOfValuesInSD = currNumOfValue
                 newSchema.numOfValuesInRD = newSchema.numOfValuesInD
                 newSchema.numOfValuesInD = 0
-
-        newSchema.numOfValuesInD = currNumOfValue
-
     elif(attribute == "E"):
-        if(newSchema.numOfValuesInE != 0):
+        if(newSchema.numOfValuesInE == 0):
+            newSchema.numOfValuesInE = currNumOfValue
+            return updateCounter + 1
+        elif(newSchema.numOfValuesInE != 0):
             if(tableName == "R"):
                 newSchema.numOfValuesInRE = currNumOfValue
                 newSchema.numOfValuesInSE = newSchema.numOfValuesInE
@@ -847,27 +839,38 @@ def updateNumOfValues(newSchema, attribute, tableName, currNumOfValue):
                 newSchema.numOfValuesInSE = currNumOfValue
                 newSchema.numOfValuesInRE = newSchema.numOfValuesInE
                 newSchema.numOfValuesInE = 0
+    return updateCounter
 
-        newSchema.numOfValuesInE = currNumOfValue
+def sizeEstimationPi(schema, attributes):   #PI[RD]
+    printBeforeOperation(schema, "PI")
+    newSchema = TableData()
+    newSchema.numOfRows = schema.numOfRows
+    updateCounter = 0
+    listOfAttributes = str.split(attributes, ",")
 
-    elif(attribute == "F"):
-        newSchema.numOfValuesInF = currNumOfValue
-    elif(attribute == "H"):
-        newSchema.numOfValuesInH = currNumOfValue
-    elif(attribute == "I"):
-        newSchema.numOfValuesInI = currNumOfValue
+    for currAttribute in listOfAttributes:
+        currAttribute = cleanSpaces(currAttribute)
+        tableName, attributeName = getTableAndAttributeName(currAttribute)
+        currNumOfValue = getNumOfValues(schema, attributeName, tableName)
+        if (currNumOfValue != 0):
+            updateCounter = updateNumOfValues(newSchema, attributeName, tableName, currNumOfValue, updateCounter)
+
+    newSchema.sizeOfRow = updateCounter * 4 #int
+    printAfterOperation(newSchema, "PI")
+    return newSchema
 
 #todo cond with and && or
 #todo Cartesian shared attributes, D,E
 #todo work flow of query. (which schema to send next)
+#todo rule11b always go to NJOIN?
 
 if __name__ == '__main__':
     queryInput = input("Please enter query (must contain SELECT, FROM, WHERE):\n")
     operatorList = makeExpression(queryInput)
     printExpression(operatorList)
-    #copyForPartOne = copy.deepcopy(operatorList)  # make a deep copy of operatorList
-    #copyForPartTwo = copy.deepcopy(operatorList)
-    #partOne(copyForPartOne)
-    #copy1, copy2, copy3, copy4 = partTwo(copyForPartTwo)
-    #partThree(copy1, copy2, copy3, copy4)
-    partThree(operatorList)
+    copyForPartOne = copy.deepcopy(operatorList)
+    copyForPartTwo = copy.deepcopy(operatorList)
+    partOne(copyForPartOne)
+    copy1, copy2, copy3, copy4 = partTwo(copyForPartTwo)
+    #partThree(copy1, copy2, copy3, copy4) #thats the real when finish
+    runPartThree(operatorList)
