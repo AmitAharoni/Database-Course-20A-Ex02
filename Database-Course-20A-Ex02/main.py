@@ -27,6 +27,46 @@ def makeExpression(query):
 
     return [Pi(selectStatement, None), Sigma(whereStatement, None), Cartesian(None, fromStatement)]
 
+
+def printTwoSigmaWithTableAndPsikBetween(operatorsList, index):
+    i = index + 1
+
+    while operatorsList[i].getTables() is None:
+        print(operatorsList[i].getOperatorName() + "[" + operatorsList[i].getDescription() + "]" + "(", end="")
+        i += 1
+
+    print(operatorsList[i].getOperatorName() + "[" + operatorsList[i].getDescription() + "]" + "(" + operatorsList[i].getTables() + ")", end="")
+    i += 1
+    print(",",end="")
+
+    while operatorsList[i].getTables() is None:
+        print(operatorsList[i].getOperatorName() + "[" + operatorsList[i].getDescription() + "]" + "(", end="")
+        i += 1
+
+    print(operatorsList[i].getOperatorName() + "[" + operatorsList[i].getDescription() + "]" + "(" + operatorsList[i].getTables() + ")", end="")
+    return i
+
+def printFirstSigmaUntilTable(operatorsList, index):
+    i = index + 1
+    while operatorsList[i].getTables() is None:
+        print(operatorsList[i].getOperatorName() + "[" + operatorsList[i].getDescription() + "]" + "(", end="")
+        i += 1
+
+    print(operatorsList[i].getOperatorName() + "[" + operatorsList[i].getDescription() + "]" + "(" + operatorsList[i].getTables() + ")", end="")
+    return i
+
+
+def lenOfOperatorListUntilCartesianOrNJoin(operatorsList):
+    len = 0
+
+    for i in operatorsList:
+        if isinstance(i, Cartesian) or isinstance(i, NJoin):
+            break
+        else:
+            len += 1
+
+    return len
+
 def printExpression(operatorsList):
     i = 0
     while i < operatorsList.__len__():
@@ -35,24 +75,20 @@ def printExpression(operatorsList):
         elif operatorsList[i].getDescription() is None and operatorsList[i].getTables() is not None:
             # Cartesian
             cartesianOrNjoin = operatorsList[i]
+            print(cartesianOrNjoin.getOperatorName() + "(", end="")
 
             if cartesianOrNjoin.isOperatorInFirst() and cartesianOrNjoin.isOperatorInSecond():
-                firstSigma = operatorsList[i + 1]
-                secondSigma = operatorsList[i + 2]
-                print(cartesianOrNjoin.getOperatorName() + "(" + firstSigma.getOperatorName() + "[" + firstSigma.getDescription() + "]" + "(" + firstSigma.getTables() + ")",  ",",
-                       secondSigma.getOperatorName() + "[" + secondSigma.getDescription() + "]" + "(" + secondSigma.getTables() + "))",  end="")
-                i += 2
+                i = printTwoSigmaWithTableAndPsikBetween(operatorsList, i)
+
             elif cartesianOrNjoin.isOperatorInFirst() and not cartesianOrNjoin.isOperatorInSecond():
-                firstSigma = operatorsList[i + 1]
-                print(cartesianOrNjoin.getOperatorName() + "(" + firstSigma.getOperatorName() + "[" + firstSigma.getDescription() + "]" + "(" + firstSigma.getTables() + ")"
-                       + cartesianOrNjoin.getTables() + ")", end = "")
-                i += 1
+                i = printFirstSigmaUntilTable(operatorsList,i)
+                print(cartesianOrNjoin.getTables(), end="")
             elif not cartesianOrNjoin.isOperatorInFirst() and cartesianOrNjoin.isOperatorInSecond():
-                secondSigma = operatorsList[i + 1]
-                print(cartesianOrNjoin.getOperatorName() + "(" + cartesianOrNjoin.getTables() + secondSigma.getOperatorName() + "[" + secondSigma.getDescription() + "]" + "(" + secondSigma.getTables() + "))" ,end = "")
-                i += 1
+                print(cartesianOrNjoin.getTables(), end="")
+                i = printFirstSigmaUntilTable(operatorsList, i)
             else:
-                print(cartesianOrNjoin.getOperatorName() + "(" + operatorsList[i].getTables() + ")", end="")
+                print(operatorsList[i].getTables(), end="")
+            print(")", end="")
 
         elif operatorsList[i].getDescription() is not None and operatorsList[i].getTables() is None:
             print(operatorsList[i].getOperatorName() + "[" + operatorsList[i].getDescription() + "]" + "(", end="")
@@ -60,8 +96,8 @@ def printExpression(operatorsList):
             print(operatorsList[i].getOperatorName() + "(", end="")
         i += 1
 
-    for i in range(operatorsList.__len__() - 1): #  operator.getDescription() is not None and operator.getTables() is not None close one paratensis
-        if i == (operatorsList.__len__() - 2):
+    for i in range(lenOfOperatorListUntilCartesianOrNJoin(operatorsList)): #  operator.getDescription() is not None and operator.getTables() is not None close one paratensis
+        if i == (lenOfOperatorListUntilCartesianOrNJoin(operatorsList) - 1):
             print(")")
         else:
             print(")", end="")
@@ -132,9 +168,9 @@ def Rule4a(operatorList):
             indexOfFirstSigma = operatorList.index(operator)
             if indexOfFirstSigma < operatorList.__len__() - 1:
                 if isinstance(operatorList[indexOfFirstSigma + 1], Sigma):
-                    if operator.getTables() != None:
-                        operatorList[indexOfFirstSigma + 1].setTables(operator.getTables())
-                        operator.setTables(None)
+                    if operatorList[indexOfFirstSigma + 1].getTables() != None:
+                        operator.setTables(operator.getTables())
+                        operatorList[indexOfFirstSigma + 1].setTables(None)
                     temp = operatorList[indexOfFirstSigma]
                     operatorList[indexOfFirstSigma] = operatorList[indexOfFirstSigma + 1]
                     operatorList[indexOfFirstSigma + 1] = temp
@@ -168,8 +204,7 @@ def Rule6a(operatorList):
         if isinstance(operator, Sigma):
             indexOfSigma = operatorList.index(operator)
             if (indexOfSigma + 1 < operatorList.__len__()):
-                if isinstance(operatorList[indexOfSigma + 1], Cartesian) or isinstance(operatorList[indexOfSigma + 1],
-                                                                                       NJoin):
+                if isinstance(operatorList[indexOfSigma + 1], Cartesian) or isinstance(operatorList[indexOfSigma + 1],NJoin):
                     cartesianOrNjoin = operatorList[indexOfSigma + 1]
                     tables = cartesianOrNjoin.getTables()
                     if not cartesianOrNjoin.isOperatorInSecond():
@@ -178,7 +213,7 @@ def Rule6a(operatorList):
                         cond = operator.getDescription()
                         if cond.__contains__(secTable) and notContainTheOtherTable(cond, secTable):
                             cartesianOrNjoin.setTables(tables[:indexOfComma + 1])
-                            if cartesianOrNjoin.getTables() == ",":
+                            if cleanSpaces(cartesianOrNjoin.getTables()) == ",":
                                 cartesianOrNjoin.setTables(None)
                             operator.setTables(secTable)
                             temp = operatorList[indexOfSigma]
@@ -573,10 +608,10 @@ def initializeFirstAndSecondTable(reversedList, schemaR, schemaS):
 
         if isinstance(operator, Sigma):
             if operator.getTables().__contains__("R"):
-                rTableAfterAll = sizeEstimationSigma(schemaR, operator.getDescription())
+                rTableAfterAll = sizeEstimationSigma(rTableAfterAll, operator.getDescription())
                 lastUpdated = "r"
             elif operator.getTables().__contains__("S"):
-                sTableAfterAll = sizeEstimationSigma(schemaS, operator.getDescription())
+                sTableAfterAll = sizeEstimationSigma(sTableAfterAll, operator.getDescription())
                 lastUpdated = "s"
             else: # not "S" and not "R" then have to be some shirshor from previous size estimation
                 if lastUpdated == "s":
@@ -587,10 +622,10 @@ def initializeFirstAndSecondTable(reversedList, schemaR, schemaS):
                 lastUpdated = None
         if isinstance(operator, Pi):
             if operator.getTables().__contains__("R"):
-                rTableAfterAll = sizeEstimationPi(schemaR, operator.getDescription())
+                rTableAfterAll = sizeEstimationPi(rTableAfterAll, operator.getDescription())
                 lastUpdated = "r"
             elif operator.getTables().__contains__("S"):
-                sTableAfterAll = sizeEstimationPi(schemaS, operator.getDescription())
+                sTableAfterAll = sizeEstimationPi(sTableAfterAll, operator.getDescription())
                 lastUpdated = "s"
             else:  # not "S" and not "R" then have to be some shirshor from previous size estimation
                 if lastUpdated == "s":
@@ -623,9 +658,9 @@ def runPartThree(operatorList):
         #if isinstance(operator, Cartesian):
         #    schemaAfterCartesian = sizeEstimationCartesian(schemaR, schemaS)
         if isinstance(reversedList[index], Sigma):
-            schemaAfterSigma = sizeEstimationSigma(finalTable, reversedList[index].getDescription())
+            sizeEstimationSigma(finalTable, reversedList[index].getDescription())
         elif isinstance(reversedList[index], Pi):
-            schemaAfterPi = sizeEstimationPi(finalTable, reversedList[index].getDescription())
+            sizeEstimationPi(finalTable, reversedList[index].getDescription())
         # elif isinstance(operator, NJoin):
         #    sizeEstimationNJoin()
         index += 1
@@ -641,11 +676,9 @@ def recForCalculateSigma(schemaAfterSigma, cond):
 
 def sizeEstimationSigma(schema, cond):
     printBeforeOperation(schema, "SIGMA")
-    schemaAfterSigma = copy.deepcopy(schema)
-    prob = recForCalculateSigma(schemaAfterSigma, cond)
-    schemaAfterSigma.numOfRows = int(prob * schemaAfterSigma.numOfRows)
-    printAfterOperation(schemaAfterSigma, "SIGMA")
-    return schemaAfterSigma
+    prob = recForCalculateSigma(schema, cond)
+    schema.numOfRows = int(prob * schema.numOfRows)
+    printAfterOperation(schema, "SIGMA")
 
 def simpleCondSizeEstimation(schemaAfterSigma, simpleCond):
     numOfAttributes = simpleCond.count(".")
@@ -874,7 +907,13 @@ def sizeEstimationPi(schema, attributes):   #PI[RD]
 
     newSchema.sizeOfRow = updateCounter * 4 #int
     printAfterOperation(newSchema, "PI")
-    return newSchema
+    schema = newSchema
+
+def sizeEstimationNJoin(schema1, schema2):
+    schemaAfterNjoin = sizeEstimationCartesian(schema1, schema2)
+    schemaAfterNjoin = sizeEstimationSigma(schemaAfterNjoin, "R.D=S.D, R.E=S.E")
+    return schemaAfterNjoin
+
 
 #todo cond with and && or
 #todo Cartesian shared attributes, D,E
