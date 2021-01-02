@@ -27,7 +27,6 @@ def makeExpression(query):
 
     return [Pi(selectStatement, None), Sigma(whereStatement, None), Cartesian(None, fromStatement)]
 
-
 def printTwoSigmaWithTableAndPsikBetween(operatorsList, index):
     i = index + 1
 
@@ -54,7 +53,6 @@ def printFirstSigmaUntilTable(operatorsList, index):
 
     print(operatorsList[i].getOperatorName() + "[" + operatorsList[i].getDescription() + "]" + "(" + operatorsList[i].getTables() + ")", end="")
     return i
-
 
 def lenOfOperatorListUntilCartesianOrNJoin(operatorsList):
     len = 0
@@ -229,16 +227,34 @@ def Rule5a(operatorList):
                 if isinstance(operatorList[indexOfPi + 1], Sigma):
                     sigma = operatorList[indexOfPi + 1]
                     attributePi = operator.getDescription()
-                    tableOfSigma = sigma.getTables()
-                    if tableOfSigma is not None:
-                        if attributePi.__contains__(tableOfSigma) and notContainTheOtherTable(attributePi,
-                                                                                              tableOfSigma):
-                            operator.setTables(tableOfSigma)
-                            sigma.setTables(None)
-                            temp = operatorList[indexOfPi]
-                            operatorList[indexOfPi] = operatorList[indexOfPi + 1]
-                            operatorList[indexOfPi + 1] = temp
-                            break
+                    cond = sigma.getDescription()
+                    tablesInCondOfSigma = splitCondIntoSimpleConditions(cond)
+                    if(isValidSigmaAndPaiAttributes(attributePi, tablesInCondOfSigma)):
+                        operator.setTables(sigma.getTables())
+                        sigma.setTables(None)
+                        temp = operatorList[indexOfPi]
+                        operatorList[indexOfPi] = operatorList[indexOfPi + 1]
+                        operatorList[indexOfPi + 1] = temp
+                        break
+
+def isValidSigmaAndPaiAttributes(attributePi, tablesInCondOfSigma):
+    for cond in tablesInCondOfSigma:
+        splited = str.split(cond, "=", 1)  # R.A = R.A, R.A = 5 , 5 = R.A, 5 = 5
+        splited[0] = cleanSpaces(splited[0])
+        splited[1] = cleanSpaces(splited[1])
+
+        if (not tablesOfCondInPai(attributePi, splited[0]) or not tablesOfCondInPai(attributePi, splited[1])):
+            return False
+
+    return True
+
+def tablesOfCondInPai(attributePi, splitedCond):
+    if isNumberValid(splitedCond):
+        return True
+    elif attributePi.__contains__(splitedCond):
+         return True
+
+    return False
 
 def oneOfCondInAllPredicateContainsBooleanAlgebra(listOfCond):
     for cond in listOfCond:
@@ -544,14 +560,22 @@ def activeRule(operatorList, selectedRuleToActive):
     print("************************************")
 
 def partOne(operatorList):
-    print(
-        "1 - rule4" + "\n" +
-        "2 - rule4a" + "\n" +
-        "3 - rule6" + "\n" +
-        "4 - rule6a" + "\n" +
-        '5 - rule5' + "\n" +
-        '6 - rule11b')
-    selectedRuleToActive = input("Please select rule:\n")
+    selectedRuleToActive = "0"
+    flag = False
+    while selectedRuleToActive < "1" or selectedRuleToActive > "6":
+        if(flag):
+            print("INVALID INPUT! PLEASE SELECT 1-6")
+        print(
+            "1 - rule4" + "\n" +
+            "2 - rule4a" + "\n" +
+            "3 - rule6" + "\n" +
+            "4 - rule6a" + "\n" +
+            '5 - rule5a' + "\n" +
+            '6 - rule11b')
+        selectedRuleToActive = input("Please select rule:\n")
+        flag = True
+
+
     activeRule(operatorList, selectedRuleToActive)
 
 def partTwo(operatorList):
@@ -589,55 +613,52 @@ def active10RandomRules(operatorList):
         randNum = random.randint(1, 6)
         activeRule(operatorList, randNum)
 
-def afterCartesianOrNJoin(operator, rTableAfterAll, sTableAfterAll):
+def afterCartesianOrNJoin(operator, schema1, schema2):
     if isinstance(operator, Cartesian):
-        return sizeEstimationCartesian(rTableAfterAll, sTableAfterAll)
-    if isinstance(operator, NJoin):
-        print("*")
-        #return sizeEstimationNJoin(rTableAfterAll, sTableAfterAll)
+        return sizeEstimationCartesian(schema1, schema2)
+    elif isinstance(operator, NJoin):
+        return sizeEstimationNJoin(schema1, schema2)
 
 def initializeFirstAndSecondTable(reversedList, schemaR, schemaS):
-    rTableAfterAll = schemaR
-    sTableAfterAll = schemaS
     index = 0
     operator = reversedList[index]
     lastUpdated = None
 
-    while not isinstance(operator, Cartesian) and not isinstance(operator,NJoin):
-        operator = reversedList[index]
-
+    while isinstance(operator, Sigma) or isinstance(operator, Pi):
         if isinstance(operator, Sigma):
-            if operator.getTables().__contains__("R"):
-                rTableAfterAll = sizeEstimationSigma(rTableAfterAll, operator.getDescription())
-                lastUpdated = "r"
-            elif operator.getTables().__contains__("S"):
-                sTableAfterAll = sizeEstimationSigma(sTableAfterAll, operator.getDescription())
-                lastUpdated = "s"
+            if operator.getTables() is not None:
+                if operator.getTables().__contains__("R"):
+                    sizeEstimationSigma(schemaR, operator.getDescription())
+                    lastUpdated = "r"
+                elif operator.getTables().__contains__("S"):
+                    sizeEstimationSigma(schemaS, operator.getDescription())
+                    lastUpdated = "s"
             else: # not "S" and not "R" then have to be some shirshor from previous size estimation
                 if lastUpdated == "s":
-                    sTableAfterAll = sizeEstimationSigma(sTableAfterAll, operator.getDescription())
+                    sizeEstimationSigma(schemaS, operator.getDescription())
                 elif lastUpdated == "r":
-                    rTableAfterAll = sizeEstimationSigma(rTableAfterAll, operator.getDescription())
+                    sizeEstimationSigma(schemaR, operator.getDescription())
 
                 lastUpdated = None
-        if isinstance(operator, Pi):
-            if operator.getTables().__contains__("R"):
-                rTableAfterAll = sizeEstimationPi(rTableAfterAll, operator.getDescription())
-                lastUpdated = "r"
-            elif operator.getTables().__contains__("S"):
-                sTableAfterAll = sizeEstimationPi(sTableAfterAll, operator.getDescription())
-                lastUpdated = "s"
+        elif isinstance(operator, Pi):
+            if operator.getTables() is not None:
+                if operator.getTables().__contains__("R"):
+                    sizeEstimationPi(schemaR, operator.getDescription())
+                    lastUpdated = "r"
+                elif operator.getTables().__contains__("S"):
+                    sizeEstimationPi(schemaS, operator.getDescription())
+                    lastUpdated = "s"
             else:  # not "S" and not "R" then have to be some shirshor from previous size estimation
                 if lastUpdated == "s":
-                    sTableAfterAll = sizeEstimationPi(sTableAfterAll, operator.getDescription())
+                    sizeEstimationPi(schemaS, operator.getDescription())
                 elif lastUpdated == "r":
-                    rTableAfterAll = sizeEstimationPi(rTableAfterAll, operator.getDescription())
+                    sizeEstimationPi(schemaR, operator.getDescription())
                 lastUpdated = None
 
-
         index += 1
+        operator = reversedList[index]
 
-    return afterCartesianOrNJoin(reversedList[index], rTableAfterAll, sTableAfterAll), index
+    return afterCartesianOrNJoin(reversedList[index], schemaR, schemaS), index
 
 def partThree(copy1, copy2, copy3, copy4):
     runPartThree(copy1)
@@ -646,24 +667,22 @@ def partThree(copy1, copy2, copy3, copy4):
     runPartThree(copy4)
 
 def runPartThree(operatorList):
+    print("PartThree ON - ", end=" ")
+    printExpression(operatorList)
     reversedList = reverseTheList(operatorList)
     fileLines = openAndReadFile()
     schemaR = makeSchemaR(fileLines)
     schemaS = makeSchemaS(fileLines)
 
-    finalTable,index = initializeFirstAndSecondTable(reversedList, schemaR, schemaS)
-    index += 1
-
-    while index != reversedList.__len__() - 1:
-        #if isinstance(operator, Cartesian):
-        #    schemaAfterCartesian = sizeEstimationCartesian(schemaR, schemaS)
-        if isinstance(reversedList[index], Sigma):
-            sizeEstimationSigma(finalTable, reversedList[index].getDescription())
-        elif isinstance(reversedList[index], Pi):
-            sizeEstimationPi(finalTable, reversedList[index].getDescription())
-        # elif isinstance(operator, NJoin):
-        #    sizeEstimationNJoin()
-        index += 1
+    finalTable, currOperatorIndex = initializeFirstAndSecondTable(reversedList, schemaR, schemaS)
+    currOperatorIndex += 1
+    endOfQuery = reversedList.__len__() - 1
+    while currOperatorIndex <= endOfQuery:
+        if isinstance(reversedList[currOperatorIndex], Sigma):
+            sizeEstimationSigma(finalTable, reversedList[currOperatorIndex].getDescription())
+        elif isinstance(reversedList[currOperatorIndex], Pi):
+            sizeEstimationPi(finalTable, reversedList[currOperatorIndex].getDescription())
+        currOperatorIndex += 1
 
 def recForCalculateSigma(schemaAfterSigma, cond):
     if isSimple_CondValid(cond):
@@ -914,12 +933,10 @@ def sizeEstimationNJoin(schema1, schema2):
     schemaAfterNjoin = sizeEstimationSigma(schemaAfterNjoin, "R.D=S.D, R.E=S.E")
     return schemaAfterNjoin
 
-
 #todo cond with and && or
 #todo Cartesian shared attributes, D,E
 #todo work flow of query. (which schema to send next)
 #todo rule11b always go to NJOIN?
-
 if __name__ == '__main__':
     queryInput = input("Please enter query (must contain SELECT, FROM, WHERE):\n")
     operatorList = makeExpression(queryInput)
@@ -928,5 +945,4 @@ if __name__ == '__main__':
     copyForPartTwo = copy.deepcopy(operatorList)
     partOne(copyForPartOne)
     copy1, copy2, copy3, copy4 = partTwo(copyForPartTwo)
-    partThree(copy1, copy2, copy3, copy4) #thats the real when finish
-    runPartThree(operatorList)
+    partThree(copy1, copy2, copy3, copy4)
